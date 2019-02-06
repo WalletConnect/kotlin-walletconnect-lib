@@ -11,8 +11,10 @@ dependencies {
     implementation "com.github.walleth.kethereum:erc55:0.70"
     implementation "com.github.walleth.kethereum:erc1328:0.70"
 
+    implementation "com.github.walleth:khex:0.6"
+
     implementation 'org.bouncycastle:bcprov-jdk15on:1.60'
-    
+
     implementation 'com.squareup.moshi:moshi:1.8.0'
 
     def okhttpVersion = '3.12.0'
