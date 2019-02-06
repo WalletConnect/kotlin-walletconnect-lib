@@ -1,13 +1,13 @@
 package org.walletconnect
 
-import org.spongycastle.crypto.digests.SHA256Digest
-import org.spongycastle.crypto.engines.AESEngine
-import org.spongycastle.crypto.macs.HMac
-import org.spongycastle.crypto.modes.CBCBlockCipher
-import org.spongycastle.crypto.paddings.PKCS7Padding
-import org.spongycastle.crypto.paddings.PaddedBufferedBlockCipher
-import org.spongycastle.crypto.params.KeyParameter
-import org.spongycastle.crypto.params.ParametersWithIV
+import org.bouncycastle.crypto.digests.SHA256Digest
+import org.bouncycastle.crypto.engines.AESEngine
+import org.bouncycastle.crypto.macs.HMac
+import org.bouncycastle.crypto.modes.CBCBlockCipher
+import org.bouncycastle.crypto.paddings.PKCS7Padding
+import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher
+import org.bouncycastle.crypto.params.KeyParameter
+import org.bouncycastle.crypto.params.ParametersWithIV
 import org.walletconnect.model.EncryptedData
 import org.walleth.khex.hexToByteArray
 import org.walleth.khex.toNoPrefixHexString
