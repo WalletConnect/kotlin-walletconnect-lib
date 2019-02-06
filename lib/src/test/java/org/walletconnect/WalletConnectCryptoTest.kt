@@ -15,7 +15,7 @@ class EncryptionTest {
     fun roundTripTest() {
         val key = createRandomBytes(32)
         listOf("probe1", "probe2", "32845si goiudeanweibutpu").forEach {
-            assertThat(String(it.toByteArray().encrypt(key).decrypt(key))).isEqualTo(it)
+            assertThat(String(PlainTextData(it).encrypt(key).decrypt(key))).isEqualTo(it)
         }
     }
 }

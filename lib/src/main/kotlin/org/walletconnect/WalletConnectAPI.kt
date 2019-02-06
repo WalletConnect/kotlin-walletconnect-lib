@@ -1,4 +1,5 @@
 package org.walletconnect
+
 import com.squareup.moshi.Moshi
 import okhttp3.MediaType
 import okhttp3.OkHttpClient
@@ -59,7 +60,8 @@ class WalletConnectAPI(
     fun createCall(call: String, key: ByteArray, sessionId: String?): CreateCallResponse? {
         val adapter = moshi.adapter(NewSessionCallRequest::class.java)
 
-        val json = adapter.toJson(NewSessionCallRequest("gets_removed_next_protocol_version", """{"data":$call}""".toByteArray().encrypt(key)))
+        val dataToEncrypt = PlainTextData("""{"data":$call}""".toByteArray())
+        val json = adapter.toJson(NewSessionCallRequest("gets_removed_next_protocol_version", dataToEncrypt.encrypt(key)))
 
         return createCallResponseAdapter.fromJson(
 

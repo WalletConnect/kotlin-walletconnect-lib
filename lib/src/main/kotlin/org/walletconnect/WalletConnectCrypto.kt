@@ -13,7 +13,11 @@ import org.walleth.khex.hexToByteArray
 import org.walleth.khex.toNoPrefixHexString
 import java.security.SecureRandom
 
-internal fun EncryptedData.decrypt(sessionKey: ByteArray): ByteArray {
+inline class PlainTextData(val data: ByteArray) {
+    constructor(data: String) : this(data.toByteArray())
+}
+
+fun EncryptedData.decrypt(sessionKey: ByteArray): ByteArray {
     val padding = PKCS7Padding()
     val aes = PaddedBufferedBlockCipher(CBCBlockCipher(AESEngine()), padding)
     val ivAndKey = ParametersWithIV(KeyParameter(sessionKey), iv.hexToByteArray())
@@ -28,16 +32,16 @@ internal fun EncryptedData.decrypt(sessionKey: ByteArray): ByteArray {
     return outBuf.copyOf(length1 + length2)
 }
 
-internal fun ByteArray.encrypt(key: ByteArray): EncryptedData {
+fun PlainTextData.encrypt(key: ByteArray): EncryptedData {
     val iv = createRandomBytes(16)
 
     val padding = PKCS7Padding()
     val aes = PaddedBufferedBlockCipher(CBCBlockCipher(AESEngine()), padding)
     aes.init(true, ParametersWithIV(KeyParameter(key), iv))
 
-    val minSize = aes.getOutputSize(size)
+    val minSize = aes.getOutputSize(data.size)
     val outBuf = ByteArray(minSize)
-    val length1 = aes.processBytes(this, 0, size, outBuf, 0)
+    val length1 = aes.processBytes(data, 0, data.size, outBuf, 0)
     aes.doFinal(outBuf, length1)
     val hmac = HMac(SHA256Digest())
     hmac.init(KeyParameter(key))

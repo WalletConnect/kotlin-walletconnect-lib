@@ -11,36 +11,3 @@ buildscript {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${KOTLIN_VERSION}"
     }
 }
-
-apply plugin: "kotlin"
-
-repositories {
-    jcenter()
-    maven { url 'https://jitpack.io' }
-}
-
-dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:${KOTLIN_VERSION}"
-
-    implementation "com.github.walleth.kethereum:erc55:0.65"
-    implementation "com.github.walleth.kethereum:erc1328:0.65"
-
-    implementation 'com.squareup.moshi:moshi:1.8.0'
-
-    def okhttpVersion = '3.12.0'
-    implementation 'com.squareup.okhttp3:okhttp:' + okhttpVersion
-
-    implementation group: 'org.slf4j', name: 'slf4j-log4j12', version: "1.7.25"
-
-    testImplementation 'org.assertj:assertj-core:3.11.1'
-    testCompile 'org.junit.jupiter:junit-jupiter-api:5.3.2'
-    testCompile 'org.junit.jupiter:junit-jupiter-params:5.3.2'
-    testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.3.2'
-
-
-    testImplementation 'com.squareup.okhttp3:mockwebserver:' + okhttpVersion
-}
-
-test {
-    useJUnitPlatform()
-}
