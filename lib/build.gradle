@@ -6,19 +6,18 @@ repositories {
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:${KOTLIN_VERSION}"
-
-    implementation "com.github.walleth.kethereum:erc55:0.70"
-    implementation "com.github.walleth.kethereum:erc1328:0.70"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$versions.kotlin"
 
     implementation "com.github.walleth:khex:0.6"
 
     implementation 'org.bouncycastle:bcprov-jdk15on:1.60'
 
     implementation 'com.squareup.moshi:moshi:1.8.0'
+    // TODO: it would be better to use the generated adapter by moshi
+    // but for that we should move the implementations in different modules
+    //kapt "com.squareup.moshi:moshi-kotlin-codegen:$versions.moshi"
 
-    def okhttpVersion = '3.12.0'
-    implementation 'com.squareup.okhttp3:okhttp:' + okhttpVersion
+    implementation "com.squareup.okhttp3:okhttp:$versions.okhttp"
 
     implementation group: 'org.slf4j', name: 'slf4j-log4j12', version: "1.7.25"
 
@@ -28,7 +27,7 @@ dependencies {
     testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.3.2'
 
 
-    testImplementation 'com.squareup.okhttp3:mockwebserver:' + okhttpVersion
+    testImplementation "com.squareup.okhttp3:mockwebserver:$versions.okhttp"
 }
 
 test {
