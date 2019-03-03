@@ -12,10 +12,10 @@ import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher
 import org.bouncycastle.crypto.params.KeyParameter
 import org.bouncycastle.crypto.params.ParametersWithIV
 import org.walletconnect.Session
-import org.walletconnect.hexToByteArray
 import org.walletconnect.nullOnThrow
-import org.walletconnect.toHexString
 import org.walletconnect.types.intoMap
+import org.walleth.khex.hexToByteArray
+import org.walleth.khex.toHexString
 import java.security.SecureRandom
 
 class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {

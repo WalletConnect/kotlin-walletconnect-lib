@@ -2,8 +2,8 @@ package org.walletconnect.impls
 
 import org.walletconnect.Session
 import org.walletconnect.nullOnThrow
-import org.walletconnect.toHexString
 import org.walletconnect.types.intoMap
+import org.walleth.khex.toHexString
 import java.security.SecureRandom
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
