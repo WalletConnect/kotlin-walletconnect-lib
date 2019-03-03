@@ -1,6 +1,10 @@
 buildscript {
     ext {
-        KOTLIN_VERSION = "1.3.21"
+        versions = [
+                kotlin: "1.3.21",
+                moshi : '1.8.0',
+                okhttp: '3.11.0',
+        ]
     }
 
     repositories {
@@ -8,6 +12,6 @@ buildscript {
     }
 
     dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${KOTLIN_VERSION}"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$versions.kotlin"
     }
 }
