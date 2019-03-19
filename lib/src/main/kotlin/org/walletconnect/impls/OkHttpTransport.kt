@@ -53,7 +53,7 @@ class OkHttpTransport(
             socket?.let { s ->
                 queue.poll()?.let {
                     s.send(adapter.toJson(it.toMap()))
-                    drainQueue() // continue draining untie there are no more messages
+                    drainQueue() // continue draining until there are no more messages
                 }
             }
         } else {
