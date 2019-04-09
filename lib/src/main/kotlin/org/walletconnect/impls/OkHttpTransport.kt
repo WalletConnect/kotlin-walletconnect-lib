@@ -52,7 +52,6 @@ class OkHttpTransport(
         if (connected) {
             socket?.let { s ->
                 queue.poll()?.let {
-                    System.out.println("Transport send $it")
                     s.send(adapter.toJson(it.toMap()))
                     drainQueue() // continue draining untie there are no more messages
                 }

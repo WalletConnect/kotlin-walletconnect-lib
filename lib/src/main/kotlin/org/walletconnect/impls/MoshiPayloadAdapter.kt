@@ -31,7 +31,7 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
 
     private fun createRandomBytes(i: Int) = ByteArray(i).also { SecureRandom().nextBytes(it) }
 
-    override fun parse(payload: String, key: String): Session.PayloadAdapter.MethodCall {
+    override fun parse(payload: String, key: String): Session.MethodCall {
         val encryptedPayload = payloadAdapter.fromJson(payload) ?: throw IllegalArgumentException("Invalid json payload!")
 
         // TODO verify hmac
@@ -56,7 +56,7 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
         return outBuf.copyOf(len).toMethodCall()
     }
 
-    override fun prepare(data: Session.PayloadAdapter.MethodCall, key: String): String {
+    override fun prepare(data: Session.MethodCall, key: String): String {
         val bytesData = data.toBytes()
         val hexKey = key.hexToByteArray()
         val iv = createRandomBytes(16)
@@ -94,10 +94,9 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
     /**
      * Convert FROM request bytes
      */
-    private fun ByteArray.toMethodCall(): Session.PayloadAdapter.MethodCall =
+    private fun ByteArray.toMethodCall(): Session.MethodCall =
         String(this).let { json ->
             mapAdapter.fromJson(json)?.let {
-                System.out.println("Json map: $it")
                 try {
                     val method = it["method"]
                     when (method) {
@@ -107,7 +106,7 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
                         "eth_sendTransaction" -> it.toSendTransaction()
                         "eth_sign" -> it.toSignMessage()
                         null -> it.toResponse()
-                        else -> throw Session.MethodCallException.InvalidMethod(it.getId(), method.toString())
+                        else -> it.toCustom()
                     }
                 } catch (e: Exception) {
                     throw Session.MethodCallException.InvalidRequest(it.getId(), "$json (${e.message ?: "Unknown error"})")
@@ -118,41 +117,41 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
     private fun Map<String, *>.getId(): Long =
         (this["id"] as? Double)?.toLong() ?: throw IllegalArgumentException("id missing")
 
-    private fun Map<String, *>.toSessionRequest(): Session.PayloadAdapter.MethodCall.SessionRequest {
+    private fun Map<String, *>.toSessionRequest(): Session.MethodCall.SessionRequest {
         val params = this["params"] as? List<*> ?: throw IllegalArgumentException("params missing")
         val data = params.firstOrNull() as? Map<*, *> ?: throw IllegalArgumentException("Invalid params")
 
-        return Session.PayloadAdapter.MethodCall.SessionRequest(
+        return Session.MethodCall.SessionRequest(
             getId(),
             data.extractPeerData()
         )
     }
 
-    private fun Map<String, *>.toSessionUpdate(): Session.PayloadAdapter.MethodCall.SessionUpdate {
+    private fun Map<String, *>.toSessionUpdate(): Session.MethodCall.SessionUpdate {
         val params = this["params"] as? List<*> ?: throw IllegalArgumentException("params missing")
         val data = params.firstOrNull() as? Map<*, *> ?: throw IllegalArgumentException("Invalid params")
         val approved = data["approved"] as? Boolean ?: throw IllegalArgumentException("approved missing")
         val chainId = data["chainId"] as? Long
         val message = data["message"] as? String
         val accounts = nullOnThrow { (data["accounts"] as? List<*>)?.toStringList() }
-        return Session.PayloadAdapter.MethodCall.SessionUpdate(
+        return Session.MethodCall.SessionUpdate(
             getId(),
-            Session.PayloadAdapter.SessionParams(approved, chainId, accounts, message)
+            Session.SessionParams(approved, chainId, accounts, message)
         )
     }
 
-    private fun Map<String, *>.toExchangeKey(): Session.PayloadAdapter.MethodCall.ExchangeKey {
+    private fun Map<String, *>.toExchangeKey(): Session.MethodCall.ExchangeKey {
         val params = this["params"] as? List<*> ?: throw IllegalArgumentException("params missing")
         val data = params.firstOrNull() as? Map<*, *> ?: throw IllegalArgumentException("Invalid params")
         val nextKey = data["nextKey"] as? String ?: throw IllegalArgumentException("next key missing")
-        return Session.PayloadAdapter.MethodCall.ExchangeKey(
+        return Session.MethodCall.ExchangeKey(
             getId(),
             nextKey,
             data.extractPeerData()
         )
     }
 
-    private fun Map<String, *>.toSendTransaction(): Session.PayloadAdapter.MethodCall.SendTransaction {
+    private fun Map<String, *>.toSendTransaction(): Session.MethodCall.SendTransaction {
         val params = this["params"] as? List<*> ?: throw IllegalArgumentException("params missing")
         val data = params.firstOrNull() as? Map<*, *> ?: throw IllegalArgumentException("Invalid params")
         val from = data["from"] as? String ?: throw IllegalArgumentException("from key missing")
@@ -163,46 +162,52 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
         val gasLimit = data["gasLimit"] as? String
         val value = data["value"] as? String ?: throw IllegalArgumentException("value key missing")
         val txData = data["data"] as? String ?: throw IllegalArgumentException("data key missing")
-        return Session.PayloadAdapter.MethodCall.SendTransaction(getId(), from, to, nonce, gasPrice, gasLimit, value, txData)
+        return Session.MethodCall.SendTransaction(getId(), from, to, nonce, gasPrice, gasLimit, value, txData)
     }
 
-    private fun Map<String, *>.toSignMessage(): Session.PayloadAdapter.MethodCall.SignMessage {
+    private fun Map<String, *>.toSignMessage(): Session.MethodCall.SignMessage {
         val params = this["params"] as? List<*> ?: throw IllegalArgumentException("params missing")
         val address = params.getOrNull(0) as? String ?: throw IllegalArgumentException("Missing address")
         val message = params.getOrNull(1) as? String ?: throw IllegalArgumentException("Missing message")
-        return Session.PayloadAdapter.MethodCall.SignMessage(getId(), address, message)
+        return Session.MethodCall.SignMessage(getId(), address, message)
     }
 
-    private fun Map<String, *>.toResponse(): Session.PayloadAdapter.MethodCall.Response {
+    private fun Map<String, *>.toCustom(): Session.MethodCall.Custom {
+        val method = this["method"] as? String ?: throw IllegalArgumentException("method missing")
+        val params = this["params"] as? List<*>
+        return Session.MethodCall.Custom(getId(), method, params)
+    }
+
+    private fun Map<String, *>.toResponse(): Session.MethodCall.Response {
         val result = this["result"]
         val error = this["error"] as? Map<*, *>
         if (result == null && error == null) throw IllegalArgumentException("no result or error")
-        return Session.PayloadAdapter.MethodCall.Response(
+        return Session.MethodCall.Response(
             getId(),
             result,
             error?.extractError()
         )
     }
 
-    private fun Map<*, *>.extractError(): Session.PayloadAdapter.Error {
+    private fun Map<*, *>.extractError(): Session.Error {
         val code = (this["code"] as? Double)?.toLong()
         val message = this["message"] as? String
-        return Session.PayloadAdapter.Error(code ?: 0, message ?: "Unknown error")
+        return Session.Error(code ?: 0, message ?: "Unknown error")
     }
 
-    private fun Map<*, *>.extractPeerData(): Session.PayloadAdapter.PeerData {
+    private fun Map<*, *>.extractPeerData(): Session.PeerData {
         val peerId = this["peerId"] as? String ?: throw IllegalArgumentException("peerId missing")
         val peerMeta = this["peerMeta"] as? Map<*, *>
-        return Session.PayloadAdapter.PeerData(peerId, peerMeta.extractPeerMeta())
+        return Session.PeerData(peerId, peerMeta.extractPeerMeta())
     }
 
-    private fun Map<*, *>?.extractPeerMeta(): Session.PayloadAdapter.PeerMeta {
+    private fun Map<*, *>?.extractPeerMeta(): Session.PeerMeta {
         val description = this?.get("description") as? String
         val url = this?.get("url") as? String
         val name = this?.get("name") as? String
         val ssl = (this?.get("ssl") as? Boolean) ?: false
         val icons = nullOnThrow { (this?.get("icons") as? List<*>)?.toStringList() }
-        return Session.PayloadAdapter.PeerMeta(url, name, description, icons, ssl)
+        return Session.PeerMeta(url, name, description, icons, ssl)
     }
 
     private fun List<*>.toStringList(): List<String> =
@@ -213,25 +218,26 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
     /**
      * Convert INTO request bytes
      */
-    private fun Session.PayloadAdapter.MethodCall.toBytes() =
+    private fun Session.MethodCall.toBytes() =
         mapAdapter.toJson(
             when (this) {
-                is Session.PayloadAdapter.MethodCall.SessionRequest -> this.toMap()
-                is Session.PayloadAdapter.MethodCall.ExchangeKey -> this.toMap()
-                is Session.PayloadAdapter.MethodCall.Response -> this.toMap()
-                is Session.PayloadAdapter.MethodCall.SessionUpdate -> this.toMap()
-                is Session.PayloadAdapter.MethodCall.SendTransaction -> this.toMap()
-                is Session.PayloadAdapter.MethodCall.SignMessage -> this.toMap()
+                is Session.MethodCall.SessionRequest -> this.toMap()
+                is Session.MethodCall.ExchangeKey -> this.toMap()
+                is Session.MethodCall.Response -> this.toMap()
+                is Session.MethodCall.SessionUpdate -> this.toMap()
+                is Session.MethodCall.SendTransaction -> this.toMap()
+                is Session.MethodCall.SignMessage -> this.toMap()
+                is Session.MethodCall.Custom -> this.toMap()
             }
         ).toByteArray()
 
-    private fun Session.PayloadAdapter.MethodCall.SessionRequest.toMap() =
+    private fun Session.MethodCall.SessionRequest.toMap() =
         jsonRpc(id, "wc_sessionRequest", peer.intoMap())
 
-    private fun Session.PayloadAdapter.MethodCall.SessionUpdate.toMap() =
+    private fun Session.MethodCall.SessionUpdate.toMap() =
         jsonRpc(id, "wc_sessionUpdate", params.intoMap())
 
-    private fun Session.PayloadAdapter.MethodCall.ExchangeKey.toMap() =
+    private fun Session.MethodCall.ExchangeKey.toMap() =
         jsonRpc(
             id, "wc_exchangeKey", peer.intoMap(
                 mutableMapOf(
@@ -240,7 +246,7 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
             )
         )
 
-    private fun Session.PayloadAdapter.MethodCall.SendTransaction.toMap() =
+    private fun Session.MethodCall.SendTransaction.toMap() =
         jsonRpc(
             id, "eth_sendTransaction", mapOf(
                 "from" to from,
@@ -253,12 +259,12 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
             )
         )
 
-    private fun Session.PayloadAdapter.MethodCall.SignMessage.toMap() =
+    private fun Session.MethodCall.SignMessage.toMap() =
         jsonRpc(
             id, "eth_sign", address, message
         )
 
-    private fun Session.PayloadAdapter.MethodCall.Response.toMap() =
+    private fun Session.MethodCall.Response.toMap() =
         mutableMapOf(
             "id" to id,
             "jsonrpc" to "2.0"
@@ -267,8 +273,16 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
             error?.let { this["error"] = error.intoMap() }
         }
 
+    private fun Session.MethodCall.Custom.toMap() =
+        jsonRpcWithList(
+            id, method, params ?: emptyList<Any>()
+        )
+
     private fun jsonRpc(id: Long, method: String, vararg params: Any) =
-        mapOf<String, Any>(
+        jsonRpcWithList(id, method, params.asList())
+
+    private fun jsonRpcWithList(id: Long, method: String, params: List<*>) =
+        mapOf(
             "id" to id,
             "jsonrpc" to "2.0",
             "method" to method,

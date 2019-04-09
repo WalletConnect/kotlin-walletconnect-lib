@@ -9,7 +9,7 @@ interface Session {
     fun update(accounts: List<String>, chainId: Long)
     fun kill()
 
-    fun peerMeta(): PayloadAdapter.PeerMeta?
+    fun peerMeta(): PeerMeta?
     fun approvedAccounts(): List<String>?
 
     fun approveRequest(id: Long, response: Any)
@@ -45,20 +45,7 @@ interface Session {
 
     interface Callback {
 
-        fun sendTransaction(
-            id: Long,
-            from: String,
-            to: String,
-            nonce: String?,
-            gasPrice: String?,
-            gasLimit: String?,
-            value: String,
-            data: String
-        )
-
-        fun signMessage(id: Long, address: String, message: String)
-
-        fun sessionRequest(peer: PayloadAdapter.PeerData)
+        fun handleMethodCall(call: MethodCall)
 
         fun sessionApproved()
 
@@ -68,44 +55,6 @@ interface Session {
     interface PayloadAdapter {
         fun parse(payload: String, key: String): MethodCall
         fun prepare(data: MethodCall, key: String): String
-
-        sealed class MethodCall(private val internalId: Long) {
-            fun id() = internalId
-
-            data class SessionRequest(val id: Long, val peer: PeerData) : MethodCall(id)
-
-            data class SessionUpdate(val id: Long, val params: SessionParams) : MethodCall(id)
-
-            data class ExchangeKey(val id: Long, val nextKey: String, val peer: PeerData) : MethodCall(id)
-
-            data class SendTransaction(
-                val id: Long,
-                val from: String,
-                val to: String,
-                val nonce: String?,
-                val gasPrice: String?,
-                val gasLimit: String?,
-                val value: String,
-                val data: String
-            ) : MethodCall(id)
-
-            data class SignMessage(val id: Long, val address: String, val message: String) : MethodCall(id)
-
-            data class Response(val id: Long, val result: Any?, val error: Error? = null) : MethodCall(id)
-        }
-
-        data class PeerData(val id: String, val meta: PeerMeta?)
-        data class PeerMeta(
-            val url: String? = null,
-            val name: String? = null,
-            val description: String? = null,
-            val icons: List<String>? = null,
-            val ssl: Boolean? = null
-        )
-
-        data class SessionParams(val approved: Boolean, val chainId: Long?, val accounts: List<String>?, val message: String?)
-
-        data class Error(val code: Long, val message: String)
 
     }
 
@@ -142,8 +91,46 @@ interface Session {
 
     sealed class MethodCallException(val id: Long, val code: Long, message: String) : IllegalArgumentException(message) {
         // TODO define proper error codes
-        class InvalidMethod(id: Long, method: String) : MethodCallException(id, 42, "Unknown method: $method")
         class InvalidRequest(id: Long, request: String) : MethodCallException(id, 23, "Invalid request: $request")
         class InvalidAccount(id: Long, account: String) : MethodCallException(id, 3141, "Invalid account request: $account")
     }
+
+    sealed class MethodCall(private val internalId: Long) {
+        fun id() = internalId
+
+        data class SessionRequest(val id: Long, val peer: PeerData) : MethodCall(id)
+
+        data class SessionUpdate(val id: Long, val params: SessionParams) : MethodCall(id)
+
+        data class ExchangeKey(val id: Long, val nextKey: String, val peer: PeerData) : MethodCall(id)
+
+        data class SendTransaction(
+            val id: Long,
+            val from: String,
+            val to: String,
+            val nonce: String?,
+            val gasPrice: String?,
+            val gasLimit: String?,
+            val value: String,
+            val data: String
+        ) : MethodCall(id)
+
+        data class SignMessage(val id: Long, val address: String, val message: String) : MethodCall(id)
+
+        data class Custom(val id: Long, val method: String, val params: List<*>?) : MethodCall(id)
+
+        data class Response(val id: Long, val result: Any?, val error: Error? = null) : MethodCall(id)
+    }
+
+    data class PeerData(val id: String, val meta: PeerMeta?)
+    data class PeerMeta(
+        val url: String? = null,
+        val name: String? = null,
+        val description: String? = null,
+        val icons: List<String>? = null,
+        val ssl: Boolean? = null
+    )
+
+    data class SessionParams(val approved: Boolean, val chainId: Long?, val accounts: List<String>?, val message: String?)
+    data class Error(val code: Long, val message: String)
 }
