@@ -3,7 +3,7 @@ package org.walletconnect.types
 import org.walletconnect.Session
 
 
-fun Session.PayloadAdapter.PeerData.intoMap(params: MutableMap<String, Any?> = mutableMapOf()) =
+fun Session.PeerData.intoMap(params: MutableMap<String, Any?> = mutableMapOf()) =
     params.also {
         params["peerId"] = this.id
         params["peerMeta"] = (this.meta?.let { meta ->
@@ -18,7 +18,7 @@ fun Session.PayloadAdapter.PeerData.intoMap(params: MutableMap<String, Any?> = m
         } ?: emptyMap<String, Any>())
     }
 
-fun Session.PayloadAdapter.SessionParams.intoMap(params: MutableMap<String, Any?> = mutableMapOf()) =
+fun Session.SessionParams.intoMap(params: MutableMap<String, Any?> = mutableMapOf()) =
     params.also {
         it["approved"] = approved
         it["chainId"] = chainId
@@ -26,7 +26,7 @@ fun Session.PayloadAdapter.SessionParams.intoMap(params: MutableMap<String, Any?
         it["message"] = message
     }
 
-fun Session.PayloadAdapter.Error.intoMap(params: MutableMap<String, Any?> = mutableMapOf()) =
+fun Session.Error.intoMap(params: MutableMap<String, Any?> = mutableMapOf()) =
     params.also {
         it["code"] = code
         it["message"] = message

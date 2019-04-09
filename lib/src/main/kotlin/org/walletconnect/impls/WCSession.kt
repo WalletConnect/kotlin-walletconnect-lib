@@ -14,7 +14,7 @@ class WCSession(
     private val payloadAdapter: Session.PayloadAdapter,
     private val sessionStore: WCSessionStore,
     transportBuilder: Session.Transport.Builder,
-    clientMeta: Session.PayloadAdapter.PeerMeta,
+    clientMeta: Session.PeerMeta,
     clientId: String? = null
 ) : Session {
 
@@ -27,9 +27,9 @@ class WCSession(
     private var approvedAccounts: List<String>? = null
     private var handshakeId: Long? = null
     private var peerId: String? = null
-    private var peerMeta: Session.PayloadAdapter.PeerMeta? = null
+    private var peerMeta: Session.PeerMeta? = null
 
-    private val clientData: Session.PayloadAdapter.PeerData
+    private val clientData: Session.PeerData
 
     // Getters
     private val encryptionKey: String
@@ -40,7 +40,7 @@ class WCSession(
 
     // Non-persisted state
     private val transport = transportBuilder.build(config.bridge, ::handleStatus, ::handleMessage)
-    private val requests: MutableMap<Long, (Session.PayloadAdapter.MethodCall.Response) -> Unit> = ConcurrentHashMap()
+    private val requests: MutableMap<Long, (Session.MethodCall.Response) -> Unit> = ConcurrentHashMap()
     private val sessionCallbacks: MutableSet<Session.Callback> = Collections.newSetFromMap(ConcurrentHashMap<Session.Callback, Boolean>())
     private val queue: Queue<QueuedMethod> = ConcurrentLinkedQueue()
 
@@ -48,7 +48,6 @@ class WCSession(
         nextKey = null
         currentKey = config.key
         clientData = sessionStore.load(config.handshakeTopic)?.let {
-            System.out.println("Session restored $it")
             nextKey = it.nextKey
             currentKey = it.currentKey
             approvedAccounts = it.approvedAccounts
@@ -59,7 +58,7 @@ class WCSession(
                 throw IllegalArgumentException("Provided clientId is different from stored clientId")
             it.clientData
         } ?: run {
-            Session.PayloadAdapter.PeerData(clientId ?: UUID.randomUUID().toString(), clientMeta)
+            Session.PeerData(clientId ?: UUID.randomUUID().toString(), clientMeta)
         }
         storeSession()
     }
@@ -72,7 +71,7 @@ class WCSession(
         sessionCallbacks.remove(cb)
     }
 
-    override fun peerMeta(): Session.PayloadAdapter.PeerMeta? = peerMeta
+    override fun peerMeta(): Session.PeerMeta? = peerMeta
 
     override fun approvedAccounts(): List<String>? = approvedAccounts
 
@@ -91,42 +90,41 @@ class WCSession(
         val handshakeId = handshakeId ?: return
         approvedAccounts = accounts
         // We should not use classes in the Response, since this will not work with proguard
-        val params = Session.PayloadAdapter.SessionParams(true, chainId, accounts, null).intoMap()
-        send(Session.PayloadAdapter.MethodCall.Response(handshakeId, params))
+        val params = Session.SessionParams(true, chainId, accounts, null).intoMap()
+        send(Session.MethodCall.Response(handshakeId, params))
         storeSession()
         sessionCallbacks.forEach { nullOnThrow { it.sessionApproved() } }
     }
 
     override fun update(accounts: List<String>, chainId: Long) {
-        val params = Session.PayloadAdapter.SessionParams(true, chainId, accounts, null)
-        send(Session.PayloadAdapter.MethodCall.SessionUpdate(createCallId(), params))
+        val params = Session.SessionParams(true, chainId, accounts, null)
+        send(Session.MethodCall.SessionUpdate(createCallId(), params))
     }
 
     override fun reject() {
         handshakeId?.let {
             // We should not use classes in the Response, since this will not work with proguard
-            val params = Session.PayloadAdapter.SessionParams(false, null, null, null).intoMap()
-            send(Session.PayloadAdapter.MethodCall.Response(it, params))
+            val params = Session.SessionParams(false, null, null, null).intoMap()
+            send(Session.MethodCall.Response(it, params))
         }
         endSession()
     }
 
     override fun approveRequest(id: Long, response: Any) {
-        send(Session.PayloadAdapter.MethodCall.Response(id, response))
+        send(Session.MethodCall.Response(id, response))
     }
 
     override fun rejectRequest(id: Long, errorCode: Long, errorMsg: String) {
         send(
-            Session.PayloadAdapter.MethodCall.Response(
+            Session.MethodCall.Response(
                 id,
                 result = null,
-                error = Session.PayloadAdapter.Error(errorCode, errorMsg)
+                error = Session.Error(errorCode, errorMsg)
             )
         )
     }
 
     private fun handleStatus(status: Session.Transport.Status) {
-        System.out.println("Status $status")
         when (status) {
             Session.Transport.Status.CONNECTED ->
                 // Register for all messages for this client
@@ -142,7 +140,7 @@ class WCSession(
 
     private fun handleMessage(message: Session.Transport.Message) {
         if (message.type != "pub") return
-        val data: Session.PayloadAdapter.MethodCall
+        val data: Session.MethodCall
         synchronized(keyLock) {
             try {
                 data = payloadAdapter.parse(message.payload, decryptionKey)
@@ -151,50 +149,46 @@ class WCSession(
                 return
             }
         }
-        System.out.println("Data $data")
+        var accountToCheck: String? = null
         when (data) {
-            is Session.PayloadAdapter.MethodCall.SessionRequest -> {
+            is Session.MethodCall.SessionRequest -> {
                 handshakeId = data.id
                 peerId = data.peer.id
                 peerMeta = data.peer.meta
                 // exchangeKey stores the session no need to do that again
                 exchangeKey()
-                sessionCallbacks.forEach { nullOnThrow { it.sessionRequest(data.peer) } }
             }
-            is Session.PayloadAdapter.MethodCall.SessionUpdate -> {
+            is Session.MethodCall.SessionUpdate -> {
                 if (!data.params.approved) {
                     endSession(data.params.message)
                 }
                 // TODO handle session update -> not important for our usecase
             }
-            is Session.PayloadAdapter.MethodCall.ExchangeKey -> {
+            is Session.MethodCall.ExchangeKey -> {
                 peerId = data.peer.id
                 peerMeta = data.peer.meta
-                send(Session.PayloadAdapter.MethodCall.Response(data.id, true))
+                send(Session.MethodCall.Response(data.id, true))
                 // swapKeys stores the session no need to do that again
                 swapKeys(data.nextKey)
                 // TODO: expose peer meta update
             }
-            is Session.PayloadAdapter.MethodCall.SendTransaction -> {
-                if (accountCheck(data.id, data.from)) {
-                    sessionCallbacks.forEach {
-                        nullOnThrow {
-                            it.sendTransaction(data.id, data.from, data.to, data.nonce, data.gasPrice, data.gasLimit, data.value, data.data)
-                        }
-                    }
-                }
+            is Session.MethodCall.SendTransaction -> {
+                accountToCheck = data.from
             }
-            is Session.PayloadAdapter.MethodCall.SignMessage -> {
-                if (accountCheck(data.id, data.address)) {
-                    sessionCallbacks.forEach {
-                        nullOnThrow { it.signMessage(data.id, data.address, data.message) }
-                    }
-                }
+            is Session.MethodCall.SignMessage -> {
+                accountToCheck = data.address
             }
-            is Session.PayloadAdapter.MethodCall.Response -> {
+            is Session.MethodCall.Response -> {
                 val callback = requests[data.id] ?: return
-                System.out.println("Trigger callback")
                 callback(data)
+            }
+        }
+
+        if (accountToCheck?.let { accountCheck(data.id(), it) } != false) {
+            sessionCallbacks.forEach {
+                nullOnThrow {
+                    it.handleMethodCall(data)
+                }
             }
         }
     }
@@ -208,8 +202,6 @@ class WCSession(
     }
 
     private fun handlePayloadError(e: Exception) {
-        System.out.println("Payload error $e")
-        e.printStackTrace()
         (e as? Session.MethodCallException)?.let {
             rejectRequest(it.id, it.code, it.message ?: "Unknown error")
         }
@@ -228,7 +220,7 @@ class WCSession(
             WCSessionStore.State(
                 config,
                 clientData,
-                peerId?.let { Session.PayloadAdapter.PeerData(it, peerMeta) },
+                peerId?.let { Session.PeerData(it, peerMeta) },
                 handshakeId,
                 currentKey,
                 nextKey,
@@ -241,11 +233,10 @@ class WCSession(
 
     private fun exchangeKey() {
         val nextKey = generateKey()
-        System.out.println("Key $nextKey")
         synchronized(keyLock) {
             this.nextKey = nextKey
             send(
-                Session.PayloadAdapter.MethodCall.ExchangeKey(
+                Session.MethodCall.ExchangeKey(
                     createCallId(),
                     nextKey,
                     clientData
@@ -253,7 +244,6 @@ class WCSession(
                 forceSend = true // This is an exchange key ... we should force it
             ) {
                 if (it.result as? Boolean == true) {
-                    System.out.println("Swap Keys")
                     swapKeys()
                 } else {
                     this.nextKey = null
@@ -287,10 +277,10 @@ class WCSession(
 
     // Returns true if method call was handed over to transport
     private fun send(
-        msg: Session.PayloadAdapter.MethodCall,
+        msg: Session.MethodCall,
         topic: String? = peerId,
         forceSend: Boolean = false,
-        callback: ((Session.PayloadAdapter.MethodCall.Response) -> Unit)? = null
+        callback: ((Session.MethodCall.Response) -> Unit)? = null
     ): Boolean {
         topic ?: return false
         // Check if key exchange is in progress
@@ -306,7 +296,6 @@ class WCSession(
         callback?.let {
             requests[msg.id()] = callback
         }
-        System.out.println("Send Request $msg")
         transport.send(Session.Transport.Message(topic, "pub", payload))
         return true
     }
@@ -323,8 +312,8 @@ class WCSession(
 
     private data class QueuedMethod(
         val topic: String,
-        val call: Session.PayloadAdapter.MethodCall,
-        val callback: ((Session.PayloadAdapter.MethodCall.Response) -> Unit)?
+        val call: Session.MethodCall,
+        val callback: ((Session.MethodCall.Response) -> Unit)?
     )
 }
 
@@ -339,8 +328,8 @@ interface WCSessionStore {
 
     data class State(
         val config: Session.Config,
-        val clientData: Session.PayloadAdapter.PeerData,
-        val peerData: Session.PayloadAdapter.PeerData?,
+        val clientData: Session.PeerData,
+        val peerData: Session.PeerData?,
         val handshakeId: Long?,
         val currentKey: String,
         val nextKey: String?,

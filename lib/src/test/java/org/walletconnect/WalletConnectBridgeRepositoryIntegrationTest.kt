@@ -2,7 +2,6 @@ package org.walletconnect
 
 import com.squareup.moshi.Moshi
 import okhttp3.OkHttpClient
-import org.junit.Test
 import org.walletconnect.impls.FileWCSessionStore
 import org.walletconnect.impls.MoshiPayloadAdapter
 import org.walletconnect.impls.OkHttpTransport
@@ -31,7 +30,7 @@ class WalletConnectBridgeRepositoryIntegrationTest {
             MoshiPayloadAdapter(moshi),
             sessionStore,
             OkHttpTransport.Builder(client, moshi),
-            Session.PayloadAdapter.PeerMeta(name = "WC Unit Test")
+            Session.PeerMeta(name = "WC Unit Test")
         )
 
         session.init()
