@@ -3,8 +3,6 @@ package org.walletconnect.impls
 import org.walletconnect.Session
 import org.walletconnect.nullOnThrow
 import org.walletconnect.types.intoMap
-import org.walleth.khex.toHexString
-import java.security.SecureRandom
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -155,22 +153,12 @@ class WCSession(
                 handshakeId = data.id
                 peerId = data.peer.id
                 peerMeta = data.peer.meta
-                // exchangeKey stores the session no need to do that again
-                exchangeKey()
             }
             is Session.MethodCall.SessionUpdate -> {
                 if (!data.params.approved) {
                     endSession(data.params.message)
                 }
                 // TODO handle session update -> not important for our usecase
-            }
-            is Session.MethodCall.ExchangeKey -> {
-                peerId = data.peer.id
-                peerMeta = data.peer.meta
-                send(Session.MethodCall.Response(data.id, true))
-                // swapKeys stores the session no need to do that again
-                swapKeys(data.nextKey)
-                // TODO: expose peer meta update
             }
             is Session.MethodCall.SendTransaction -> {
                 accountToCheck = data.from
@@ -227,52 +215,6 @@ class WCSession(
                 approvedAccounts
             )
         )
-    }
-
-    private fun generateKey(length: Int = 256) = ByteArray(length / 8).also { SecureRandom().nextBytes(it) }.toHexString()
-
-    private fun exchangeKey() {
-        val nextKey = generateKey()
-        synchronized(keyLock) {
-            this.nextKey = nextKey
-            send(
-                Session.MethodCall.ExchangeKey(
-                    createCallId(),
-                    nextKey,
-                    clientData
-                ),
-                forceSend = true // This is an exchange key ... we should force it
-            ) {
-                if (it.result as? Boolean == true) {
-                    swapKeys()
-                } else {
-                    this.nextKey = null
-                    drainQueue()
-                }
-            }
-        }
-        storeSession()
-    }
-
-    private fun swapKeys(newKey: String? = nextKey) {
-        synchronized(keyLock) {
-            newKey?.let {
-                this.currentKey = it
-                // We always reset the nextKey
-                nextKey = null
-            }
-        }
-        storeSession()
-        drainQueue()
-    }
-
-    private fun drainQueue() {
-        var method = queue.poll()
-        while (method != null) {
-            // We could not send it ... bail
-            if (!send(method.call, method.topic, false, method.callback)) return
-            method = queue.poll()
-        }
     }
 
     // Returns true if method call was handed over to transport

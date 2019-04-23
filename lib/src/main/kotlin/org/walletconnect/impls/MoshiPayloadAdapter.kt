@@ -102,7 +102,6 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
                     when (method) {
                         "wc_sessionRequest" -> it.toSessionRequest()
                         "wc_sessionUpdate" -> it.toSessionUpdate()
-                        "wc_exchangeKey" -> it.toExchangeKey()
                         "eth_sendTransaction" -> it.toSendTransaction()
                         "eth_sign" -> it.toSignMessage()
                         null -> it.toResponse()
@@ -137,17 +136,6 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
         return Session.MethodCall.SessionUpdate(
             getId(),
             Session.SessionParams(approved, chainId, accounts, message)
-        )
-    }
-
-    private fun Map<String, *>.toExchangeKey(): Session.MethodCall.ExchangeKey {
-        val params = this["params"] as? List<*> ?: throw IllegalArgumentException("params missing")
-        val data = params.firstOrNull() as? Map<*, *> ?: throw IllegalArgumentException("Invalid params")
-        val nextKey = data["nextKey"] as? String ?: throw IllegalArgumentException("next key missing")
-        return Session.MethodCall.ExchangeKey(
-            getId(),
-            nextKey,
-            data.extractPeerData()
         )
     }
 
@@ -222,7 +210,6 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
         mapAdapter.toJson(
             when (this) {
                 is Session.MethodCall.SessionRequest -> this.toMap()
-                is Session.MethodCall.ExchangeKey -> this.toMap()
                 is Session.MethodCall.Response -> this.toMap()
                 is Session.MethodCall.SessionUpdate -> this.toMap()
                 is Session.MethodCall.SendTransaction -> this.toMap()
@@ -236,15 +223,6 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
 
     private fun Session.MethodCall.SessionUpdate.toMap() =
         jsonRpc(id, "wc_sessionUpdate", params.intoMap())
-
-    private fun Session.MethodCall.ExchangeKey.toMap() =
-        jsonRpc(
-            id, "wc_exchangeKey", peer.intoMap(
-                mutableMapOf(
-                    "nextKey" to nextKey
-                )
-            )
-        )
 
     private fun Session.MethodCall.SendTransaction.toMap() =
         jsonRpc(

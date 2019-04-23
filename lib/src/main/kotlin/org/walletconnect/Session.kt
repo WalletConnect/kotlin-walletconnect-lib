@@ -102,8 +102,6 @@ interface Session {
 
         data class SessionUpdate(val id: Long, val params: SessionParams) : MethodCall(id)
 
-        data class ExchangeKey(val id: Long, val nextKey: String, val peer: PeerData) : MethodCall(id)
-
         data class SendTransaction(
             val id: Long,
             val from: String,
