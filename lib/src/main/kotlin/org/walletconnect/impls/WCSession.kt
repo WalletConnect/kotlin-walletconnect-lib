@@ -19,7 +19,6 @@ class WCSession(
     private val keyLock = Any()
 
     // Persisted state
-    private var nextKey: String?
     private var currentKey: String
 
     private var approvedAccounts: List<String>? = null
@@ -43,10 +42,8 @@ class WCSession(
     private val queue: Queue<QueuedMethod> = ConcurrentLinkedQueue()
 
     init {
-        nextKey = null
         currentKey = config.key
         clientData = sessionStore.load(config.handshakeTopic)?.let {
-            nextKey = it.nextKey
             currentKey = it.currentKey
             approvedAccounts = it.approvedAccounts
             handshakeId = it.handshakeId
@@ -211,7 +208,6 @@ class WCSession(
                 peerId?.let { Session.PeerData(it, peerMeta) },
                 handshakeId,
                 currentKey,
-                nextKey,
                 approvedAccounts
             )
         )
@@ -221,15 +217,9 @@ class WCSession(
     private fun send(
         msg: Session.MethodCall,
         topic: String? = peerId,
-        forceSend: Boolean = false,
         callback: ((Session.MethodCall.Response) -> Unit)? = null
     ): Boolean {
         topic ?: return false
-        // Check if key exchange is in progress
-        if (!forceSend && nextKey != null) {
-            queue.offer(QueuedMethod(topic, msg, callback))
-            return false
-        }
 
         val payload: String
         synchronized(keyLock) {
@@ -274,7 +264,6 @@ interface WCSessionStore {
         val peerData: Session.PeerData?,
         val handshakeId: Long?,
         val currentKey: String,
-        val nextKey: String?,
         val approvedAccounts: List<String>?
     )
 }
