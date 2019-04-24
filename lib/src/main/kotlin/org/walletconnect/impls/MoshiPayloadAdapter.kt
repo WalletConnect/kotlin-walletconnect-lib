@@ -15,7 +15,7 @@ import org.walletconnect.Session
 import org.walletconnect.nullOnThrow
 import org.walletconnect.types.intoMap
 import org.walleth.khex.hexToByteArray
-import org.walleth.khex.toHexString
+import org.walleth.khex.toNoPrefixHexString
 import java.security.SecureRandom
 
 class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
@@ -84,9 +84,9 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
 
         return payloadAdapter.toJson(
             EncryptedPayload(
-                outBuf.toHexString(),
-                hmac = hmacResult.toHexString(),
-                iv = iv.toHexString()
+                outBuf.toNoPrefixHexString(),
+                hmac = hmacResult.toNoPrefixHexString(),
+                iv = iv.toNoPrefixHexString()
             )
         )
     }
