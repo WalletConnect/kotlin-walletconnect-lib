@@ -125,8 +125,7 @@ interface Session {
         val url: String? = null,
         val name: String? = null,
         val description: String? = null,
-        val icons: List<String>? = null,
-        val ssl: Boolean? = null
+        val icons: List<String>? = null
     )
 
     data class SessionParams(val approved: Boolean, val chainId: Long?, val accounts: List<String>?, val peerData: PeerData?)

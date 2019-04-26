@@ -10,7 +10,6 @@ fun Session.PeerMeta.intoMap(params: MutableMap<String, Any?> = mutableMapOf()) 
                 "url" to (url ?: ""),
                 "name" to (name ?: "")
             ).apply {
-                ssl?.let { put("ssl", it) }
                 icons?.let { put("icons", it) }
             }
     }

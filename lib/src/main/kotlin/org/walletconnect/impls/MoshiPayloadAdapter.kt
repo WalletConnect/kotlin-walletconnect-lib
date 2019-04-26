@@ -192,9 +192,8 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
         val description = this?.get("description") as? String
         val url = this?.get("url") as? String
         val name = this?.get("name") as? String
-        val ssl = (this?.get("ssl") as? Boolean) ?: false
         val icons = nullOnThrow { (this?.get("icons") as? List<*>)?.toStringList() }
-        return Session.PeerMeta(url, name, description, icons, ssl)
+        return Session.PeerMeta(url, name, description, icons)
     }
 
     private fun List<*>.toStringList(): List<String> =
