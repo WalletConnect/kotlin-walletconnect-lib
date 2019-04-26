@@ -131,11 +131,10 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
         val data = params.firstOrNull() as? Map<*, *> ?: throw IllegalArgumentException("Invalid params")
         val approved = data["approved"] as? Boolean ?: throw IllegalArgumentException("approved missing")
         val chainId = data["chainId"] as? Long
-        val message = data["message"] as? String
         val accounts = nullOnThrow { (data["accounts"] as? List<*>)?.toStringList() }
         return Session.MethodCall.SessionUpdate(
             getId(),
-            Session.SessionParams(approved, chainId, accounts, message)
+            Session.SessionParams(approved, chainId, accounts, nullOnThrow { data.extractPeerData() })
         )
     }
 

@@ -49,7 +49,7 @@ interface Session {
 
         fun sessionApproved()
 
-        fun sessionClosed(msg: String?)
+        fun sessionClosed()
     }
 
     interface PayloadAdapter {
@@ -129,6 +129,6 @@ interface Session {
         val ssl: Boolean? = null
     )
 
-    data class SessionParams(val approved: Boolean, val chainId: Long?, val accounts: List<String>?, val message: String?)
+    data class SessionParams(val approved: Boolean, val chainId: Long?, val accounts: List<String>?, val peerData: PeerData?)
     data class Error(val code: Long, val message: String)
 }
