@@ -85,14 +85,14 @@ class WCSession(
         val handshakeId = handshakeId ?: return
         approvedAccounts = accounts
         // We should not use classes in the Response, since this will not work with proguard
-        val params = Session.SessionParams(true, chainId, accounts, null).intoMap()
+        val params = Session.SessionParams(true, chainId, accounts, clientData).intoMap()
         send(Session.MethodCall.Response(handshakeId, params))
         storeSession()
         sessionCallbacks.forEach { nullOnThrow { it.sessionApproved() } }
     }
 
     override fun update(accounts: List<String>, chainId: Long) {
-        val params = Session.SessionParams(true, chainId, accounts, null)
+        val params = Session.SessionParams(true, chainId, accounts, clientData)
         send(Session.MethodCall.SessionUpdate(createCallId(), params))
     }
 
@@ -153,7 +153,7 @@ class WCSession(
             }
             is Session.MethodCall.SessionUpdate -> {
                 if (!data.params.approved) {
-                    endSession(data.params.message)
+                    endSession()
                 }
                 // TODO handle session update -> not important for our usecase
             }
@@ -192,11 +192,11 @@ class WCSession(
         }
     }
 
-    private fun endSession(message: String? = null) {
+    private fun endSession() {
         sessionStore.remove(config.handshakeTopic)
         approvedAccounts = null
         internalClose()
-        sessionCallbacks.forEach { nullOnThrow { it.sessionClosed(message) } }
+        sessionCallbacks.forEach { nullOnThrow { it.sessionClosed() } }
     }
 
     private fun storeSession() {
