@@ -1,0 +1,67 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+
+android {
+    compileSdkVersion versions.compileSdk
+    buildToolsVersion versions.buildTools
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_7
+        targetCompatibility JavaVersion.VERSION_1_7
+    }
+
+    defaultConfig {
+        applicationId 'io.walletconnect.example'
+        minSdkVersion versions.minSdk
+        targetSdkVersion versions.compileSdk
+        versionCode 1
+        versionName '1.0.0'
+    }
+
+    dexOptions {
+        jumboMode = true
+    }
+
+    lintOptions {
+        textReport true
+        textOutput 'stdout'
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-debug"
+            minifyEnabled false
+        }
+    }
+}
+
+repositories {
+    repositories {
+        google()
+        jcenter()
+        mavenCentral()
+        maven { url 'https://www.jitpack.io' }
+    }
+}
+
+dependencies {
+    implementation project(":lib")
+
+    implementation "org.java-websocket:Java-WebSocket:1.4.0"
+
+    implementation "com.github.walleth:khex:0.6"
+
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${versions.kotlin}"
+
+    implementation "androidx.appcompat:appcompat:$versions.androidx_app_compat"
+    implementation "androidx.multidex:multidex:$versions.multidex"
+
+    implementation 'com.squareup.moshi:moshi:1.8.0'
+    implementation "com.squareup.okhttp3:okhttp:$versions.okhttp"
+
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.0.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.0.0'
+
+}

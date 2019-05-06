@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/screen_main_status"
+        android:layout_width="wrap_content"
+        android:layout_height="64dp"
+        android:text="Disconnected" />
+
+    <TextView
+        android:id="@+id/screen_main_response"
+        android:layout_width="wrap_content"
+        android:layout_height="64dp"
+        android:visibility="gone"/>
+
+    <Button
+        android:id="@+id/screen_main_connect_button"
+        android:layout_width="wrap_content"
+        android:layout_height="64dp"
+        android:text="Connect" />
+
+    <Button
+        android:id="@+id/screen_main_tx_button"
+        android:layout_width="wrap_content"
+        android:layout_height="64dp"
+        android:text="Send Example TX"
+        android:visibility="gone" />
+
+    <Button
+        android:id="@+id/screen_main_disconnect_button"
+        android:layout_width="wrap_content"
+        android:layout_height="64dp"
+        android:text="Disonnect"
+        android:visibility="gone" />
+</LinearLayout>

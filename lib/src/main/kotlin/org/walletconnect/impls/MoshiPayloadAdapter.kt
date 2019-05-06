@@ -13,7 +13,7 @@ import org.bouncycastle.crypto.params.KeyParameter
 import org.bouncycastle.crypto.params.ParametersWithIV
 import org.walletconnect.Session
 import org.walletconnect.nullOnThrow
-import org.walletconnect.types.intoMap
+import org.walletconnect.types.*
 import org.walleth.khex.hexToByteArray
 import org.walleth.khex.toNoPrefixHexString
 import java.security.SecureRandom
@@ -113,28 +113,12 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
             } ?: throw IllegalArgumentException("Invalid json")
         }
 
-    private fun Map<String, *>.getId(): Long =
-        (this["id"] as? Double)?.toLong() ?: throw IllegalArgumentException("id missing")
-
-    private fun Map<String, *>.toSessionRequest(): Session.MethodCall.SessionRequest {
-        val params = this["params"] as? List<*> ?: throw IllegalArgumentException("params missing")
-        val data = params.firstOrNull() as? Map<*, *> ?: throw IllegalArgumentException("Invalid params")
-
-        return Session.MethodCall.SessionRequest(
-            getId(),
-            data.extractPeerData()
-        )
-    }
-
     private fun Map<String, *>.toSessionUpdate(): Session.MethodCall.SessionUpdate {
         val params = this["params"] as? List<*> ?: throw IllegalArgumentException("params missing")
-        val data = params.firstOrNull() as? Map<*, *> ?: throw IllegalArgumentException("Invalid params")
-        val approved = data["approved"] as? Boolean ?: throw IllegalArgumentException("approved missing")
-        val chainId = data["chainId"] as? Long
-        val accounts = nullOnThrow { (data["accounts"] as? List<*>)?.toStringList() }
+        val data = params.firstOrNull() as? Map<String, *> ?: throw IllegalArgumentException("Invalid params")
         return Session.MethodCall.SessionUpdate(
             getId(),
-            Session.SessionParams(approved, chainId, accounts, nullOnThrow { data.extractPeerData() })
+            data.extractSessionParams()
         )
     }
 
@@ -175,31 +159,6 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
             error?.extractError()
         )
     }
-
-    private fun Map<*, *>.extractError(): Session.Error {
-        val code = (this["code"] as? Double)?.toLong()
-        val message = this["message"] as? String
-        return Session.Error(code ?: 0, message ?: "Unknown error")
-    }
-
-    private fun Map<*, *>.extractPeerData(): Session.PeerData {
-        val peerId = this["peerId"] as? String ?: throw IllegalArgumentException("peerId missing")
-        val peerMeta = this["peerMeta"] as? Map<*, *>
-        return Session.PeerData(peerId, peerMeta.extractPeerMeta())
-    }
-
-    private fun Map<*, *>?.extractPeerMeta(): Session.PeerMeta {
-        val description = this?.get("description") as? String
-        val url = this?.get("url") as? String
-        val name = this?.get("name") as? String
-        val icons = nullOnThrow { (this?.get("icons") as? List<*>)?.toStringList() }
-        return Session.PeerMeta(url, name, description, icons)
-    }
-
-    private fun List<*>.toStringList(): List<String> =
-        this.map {
-            (it as? String) ?: throw IllegalArgumentException("List contains non-String values")
-        }
 
     /**
      * Convert INTO request bytes
