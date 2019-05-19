@@ -21,8 +21,6 @@ dependencies {
 
     implementation group: 'org.slf4j', name: 'slf4j-log4j12', version: "1.7.25"
 
-    implementation "com.github.walleth:khex:0.6"
-
     testImplementation 'org.assertj:assertj-core:3.11.1'
     testCompile 'org.junit.jupiter:junit-jupiter-api:5.3.2'
     testCompile 'org.junit.jupiter:junit-jupiter-params:5.3.2'
