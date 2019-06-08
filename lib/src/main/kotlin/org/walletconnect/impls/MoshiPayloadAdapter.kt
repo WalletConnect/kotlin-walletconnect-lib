@@ -98,12 +98,12 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
         String(this).let { json ->
             mapAdapter.fromJson(json)?.let {
                 try {
-                    val method = it["method"]
-                    when (method) {
+                    when (it["method"]) {
                         "wc_sessionRequest" -> it.toSessionRequest()
                         "wc_sessionUpdate" -> it.toSessionUpdate()
                         "eth_sendTransaction" -> it.toSendTransaction()
-                        "eth_sign" -> it.toSignMessage()
+                        "personal_sign" -> it.toSignMessage()
+                        "eth_sign" -> it.toSignHash()
                         null -> it.toResponse()
                         else -> it.toCustom()
                     }
@@ -157,6 +157,13 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
         val address = params.getOrNull(0) as? String ?: throw IllegalArgumentException("Missing address")
         val message = params.getOrNull(1) as? String ?: throw IllegalArgumentException("Missing message")
         return Session.MethodCall.SignMessage(getId(), address, message)
+    }
+
+    private fun Map<String, *>.toSignHash(): Session.MethodCall.SignHash {
+        val params = this["params"] as? List<*> ?: throw IllegalArgumentException("params missing")
+        val address = params.getOrNull(0) as? String ?: throw IllegalArgumentException("Missing address")
+        val message = params.getOrNull(1) as? String ?: throw IllegalArgumentException("Missing message")
+        return Session.MethodCall.SignHash(getId(), address, message)
     }
 
     private fun Map<String, *>.toCustom(): Session.MethodCall.Custom {

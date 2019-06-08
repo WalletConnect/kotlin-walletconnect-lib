@@ -81,9 +81,9 @@ interface Session {
 
         interface Builder {
             fun build(
-                url: String,
-                statusHandler: (Session.Transport.Status) -> Unit,
-                messageHandler: (Session.Transport.Message) -> Unit
+                    url: String,
+                    statusHandler: (Status) -> Unit,
+                    messageHandler: (Message) -> Unit
             ): Transport
         }
 
@@ -114,6 +114,7 @@ interface Session {
         ) : MethodCall(id)
 
         data class SignMessage(val id: Long, val address: String, val message: String) : MethodCall(id)
+        data class SignHash(val id: Long, val address: String, val hash: String) : MethodCall(id)
 
         data class Custom(val id: Long, val method: String, val params: List<*>?) : MethodCall(id)
 
