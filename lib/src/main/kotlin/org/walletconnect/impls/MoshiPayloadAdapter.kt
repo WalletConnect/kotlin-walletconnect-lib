@@ -220,6 +220,7 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
                 is Session.MethodCall.SendTransaction -> this.toMap()
                 is Session.MethodCall.SignMessage -> this.toMap()
                 is Session.MethodCall.Custom -> this.toMap()
+                is Session.MethodCall.SignHash -> this.toMap()
             }
         ).toByteArray()
 
@@ -246,6 +247,11 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
         jsonRpc(
             id, "eth_sign", address, message
         )
+
+    private fun Session.MethodCall.SignHash.toMap() =
+            jsonRpc(
+                    id, "personal_sign", address, hash
+            )
 
     private fun Session.MethodCall.Response.toMap() =
         mutableMapOf(
