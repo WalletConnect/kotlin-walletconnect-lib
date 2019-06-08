@@ -1,4 +1,4 @@
 {
 "type":"lib",
-"stages":["test","build"]
+    "stages":[{"name":"test"},{"name":"build"}]
 }
