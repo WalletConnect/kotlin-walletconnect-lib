@@ -41,7 +41,7 @@ buildscript {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$versions.kotlin"
         classpath 'com.github.ben-manes:gradle-versions-plugin:0.21.0'
         // How can we move this to the sample folder
-        classpath deps.android.gradlePlugin
+        //classpath deps.android.gradlePlugin
     }
 }
 
