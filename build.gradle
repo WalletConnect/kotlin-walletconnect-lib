@@ -31,10 +31,12 @@ buildscript {
 
     repositories {
         jcenter()
+        /*
         google()
         maven {
             url uri('../../repo')
         }
+        */
     }
 
     dependencies {
