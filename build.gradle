@@ -31,17 +31,13 @@ buildscript {
 
     repositories {
         jcenter()
-        /*
         google()
-        maven {
-            url uri('../../repo')
-        }
-        */
     }
 
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$versions.kotlin"
         classpath 'com.github.ben-manes:gradle-versions-plugin:0.21.0'
+        classpath 'com.android.tools.build:gradle:3.4.1'
         // How can we move this to the sample folder
         //classpath deps.android.gradlePlugin
     }

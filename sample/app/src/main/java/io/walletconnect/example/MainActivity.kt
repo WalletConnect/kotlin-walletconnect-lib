@@ -1,11 +1,11 @@
 package io.walletconnect.example
 
 import android.app.Activity
-import android.os.Bundle
-import kotlinx.android.synthetic.main.screen_main.*
 import android.content.Intent
 import android.net.Uri
+import android.os.Bundle
 import android.view.View
+import kotlinx.android.synthetic.main.screen_main.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -70,7 +70,7 @@ class MainActivity : Activity(), Session.Callback {
                             null,
                             null,
                             "0x5AF3107A4000",
-                            ""bu
+                            ""
                     ),
                     ::handleResponse
             )
