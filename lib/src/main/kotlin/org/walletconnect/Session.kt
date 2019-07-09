@@ -1,9 +1,14 @@
 package org.walletconnect
 
 import java.net.URLDecoder
+import java.net.URLEncoder
 
 interface Session {
     fun init()
+    /**
+     * Send client info to the bridge and wait for a client to connect
+     */
+    fun offer()
     fun approve(accounts: List<String>, chainId: Long)
     fun reject()
     fun update(accounts: List<String>, chainId: Long)
@@ -14,9 +19,11 @@ interface Session {
 
     fun approveRequest(id: Long, response: Any)
     fun rejectRequest(id: Long, errorCode: Long, errorMsg: String)
+    fun performMethodCall(call: MethodCall, callback: ((Session.MethodCall.Response) -> Unit)? = null)
 
-    fun addCallback(cb: Session.Callback)
-    fun removeCallback(cb: Session.Callback)
+    fun addCallback(cb: Callback)
+    fun removeCallback(cb: Callback)
+    fun clearCallbacks()
 
     data class Config(
         val handshakeTopic: String,
@@ -25,6 +32,8 @@ interface Session {
         val protocol: String = "wc",
         val version: Int = 1
     ) {
+        fun toWCUri(): String =
+                "wc:$handshakeTopic@$version?bridge=${URLEncoder.encode(bridge, "UTF-8")}&key=$key"
         companion object {
             fun fromWCUri(uri: String): Config {
                 val protocolSeparator = uri.indexOf(':')
@@ -82,8 +91,8 @@ interface Session {
         interface Builder {
             fun build(
                 url: String,
-                statusHandler: (Session.Transport.Status) -> Unit,
-                messageHandler: (Session.Transport.Message) -> Unit
+                statusHandler: (Status) -> Unit,
+                messageHandler: (Message) -> Unit
             ): Transport
         }
 

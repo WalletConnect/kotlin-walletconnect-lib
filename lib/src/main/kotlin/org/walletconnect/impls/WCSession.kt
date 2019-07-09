@@ -2,18 +2,18 @@ package org.walletconnect.impls
 
 import org.walletconnect.Session
 import org.walletconnect.nullOnThrow
+import org.walletconnect.types.extractSessionParams
 import org.walletconnect.types.intoMap
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentLinkedQueue
 
 class WCSession(
-    private val config: Session.Config,
-    private val payloadAdapter: Session.PayloadAdapter,
-    private val sessionStore: WCSessionStore,
-    transportBuilder: Session.Transport.Builder,
-    clientMeta: Session.PeerMeta,
-    clientId: String? = null
+        private val config: Session.Config,
+        private val payloadAdapter: Session.PayloadAdapter,
+        private val sessionStore: WCSessionStore,
+        transportBuilder: Session.Transport.Builder,
+        clientMeta: Session.PeerMeta,
+        clientId: String? = null
 ) : Session {
 
     private val keyLock = Any()
@@ -22,6 +22,7 @@ class WCSession(
     private var currentKey: String
 
     private var approvedAccounts: List<String>? = null
+    private var chainId: Long? = null
     private var handshakeId: Long? = null
     private var peerId: String? = null
     private var peerMeta: Session.PeerMeta? = null
@@ -39,13 +40,13 @@ class WCSession(
     private val transport = transportBuilder.build(config.bridge, ::handleStatus, ::handleMessage)
     private val requests: MutableMap<Long, (Session.MethodCall.Response) -> Unit> = ConcurrentHashMap()
     private val sessionCallbacks: MutableSet<Session.Callback> = Collections.newSetFromMap(ConcurrentHashMap<Session.Callback, Boolean>())
-    private val queue: Queue<QueuedMethod> = ConcurrentLinkedQueue()
 
     init {
         currentKey = config.key
         clientData = sessionStore.load(config.handshakeTopic)?.let {
             currentKey = it.currentKey
             approvedAccounts = it.approvedAccounts
+            chainId = it.chainId
             handshakeId = it.handshakeId
             peerId = it.peerData?.id
             peerMeta = it.peerData?.meta
@@ -66,6 +67,10 @@ class WCSession(
         sessionCallbacks.remove(cb)
     }
 
+    override fun clearCallbacks() {
+        sessionCallbacks.clear()
+    }
+
     override fun peerMeta(): Session.PeerMeta? = peerMeta
 
     override fun approvedAccounts(): List<String>? = approvedAccounts
@@ -74,16 +79,34 @@ class WCSession(
         if (transport.connect()) {
             // Register for all messages for this client
             transport.send(
-                Session.Transport.Message(
-                    config.handshakeTopic, "sub", ""
-                )
+                    Session.Transport.Message(
+                            config.handshakeTopic, "sub", ""
+                    )
             )
+        }
+    }
+
+    override fun offer() {
+        if (transport.connect()) {
+            val requestId = createCallId()
+            send(Session.MethodCall.SessionRequest(requestId, clientData), topic = config.handshakeTopic, callback = { resp ->
+                (resp.result as? Map<String, *>)?.extractSessionParams()?.let { params ->
+                    peerId = params.peerData?.id
+                    peerMeta = params.peerData?.meta
+                    approvedAccounts = params.accounts
+                    chainId = params.chainId
+                    storeSession()
+                    sessionCallbacks.forEach { nullOnThrow { if (params.approved) it.sessionApproved() else it.sessionClosed() } }
+                }
+            })
+            handshakeId = requestId
         }
     }
 
     override fun approve(accounts: List<String>, chainId: Long) {
         val handshakeId = handshakeId ?: return
         approvedAccounts = accounts
+        this.chainId = chainId
         // We should not use classes in the Response, since this will not work with proguard
         val params = Session.SessionParams(true, chainId, accounts, clientData).intoMap()
         send(Session.MethodCall.Response(handshakeId, params))
@@ -111,12 +134,16 @@ class WCSession(
 
     override fun rejectRequest(id: Long, errorCode: Long, errorMsg: String) {
         send(
-            Session.MethodCall.Response(
-                id,
-                result = null,
-                error = Session.Error(errorCode, errorMsg)
-            )
+                Session.MethodCall.Response(
+                        id,
+                        result = null,
+                        error = Session.Error(errorCode, errorMsg)
+                )
         )
+    }
+
+    override fun performMethodCall(call: Session.MethodCall, callback: ((Session.MethodCall.Response) -> Unit)?) {
+        send(call, callback = callback)
     }
 
     private fun handleStatus(status: Session.Transport.Status) {
@@ -124,9 +151,9 @@ class WCSession(
             Session.Transport.Status.CONNECTED ->
                 // Register for all messages for this client
                 transport.send(
-                    Session.Transport.Message(
-                        clientData.id, "sub", ""
-                    )
+                        Session.Transport.Message(
+                                clientData.id, "sub", ""
+                        )
                 )
             Session.Transport.Status.DISCONNECTED -> {
             } // noop
@@ -150,6 +177,7 @@ class WCSession(
                 handshakeId = data.id
                 peerId = data.peer.id
                 peerMeta = data.peer.meta
+                storeSession()
             }
             is Session.MethodCall.SessionUpdate -> {
                 if (!data.params.approved) {
@@ -195,29 +223,31 @@ class WCSession(
     private fun endSession() {
         sessionStore.remove(config.handshakeTopic)
         approvedAccounts = null
+        chainId = null
         internalClose()
         sessionCallbacks.forEach { nullOnThrow { it.sessionClosed() } }
     }
 
     private fun storeSession() {
         sessionStore.store(
-            config.handshakeTopic,
-            WCSessionStore.State(
-                config,
-                clientData,
-                peerId?.let { Session.PeerData(it, peerMeta) },
-                handshakeId,
-                currentKey,
-                approvedAccounts
-            )
+                config.handshakeTopic,
+                WCSessionStore.State(
+                        config,
+                        clientData,
+                        peerId?.let { Session.PeerData(it, peerMeta) },
+                        handshakeId,
+                        currentKey,
+                        approvedAccounts,
+                        chainId
+                )
         )
     }
 
     // Returns true if method call was handed over to transport
     private fun send(
-        msg: Session.MethodCall,
-        topic: String? = peerId,
-        callback: ((Session.MethodCall.Response) -> Unit)? = null
+            msg: Session.MethodCall,
+            topic: String? = peerId,
+            callback: ((Session.MethodCall.Response) -> Unit)? = null
     ): Boolean {
         topic ?: return false
 
@@ -239,14 +269,10 @@ class WCSession(
     }
 
     override fun kill() {
-        reject()
+        val params = Session.SessionParams(false, null, null, null)
+        send(Session.MethodCall.SessionUpdate(createCallId(), params))
+        endSession()
     }
-
-    private data class QueuedMethod(
-        val topic: String,
-        val call: Session.MethodCall,
-        val callback: ((Session.MethodCall.Response) -> Unit)?
-    )
 }
 
 interface WCSessionStore {
@@ -259,11 +285,12 @@ interface WCSessionStore {
     fun list(): List<State>
 
     data class State(
-        val config: Session.Config,
-        val clientData: Session.PeerData,
-        val peerData: Session.PeerData?,
-        val handshakeId: Long?,
-        val currentKey: String,
-        val approvedAccounts: List<String>?
+            val config: Session.Config,
+            val clientData: Session.PeerData,
+            val peerData: Session.PeerData?,
+            val handshakeId: Long?,
+            val currentKey: String,
+            val approvedAccounts: List<String>?,
+            val chainId: Long?
     )
 }
