@@ -110,8 +110,7 @@ class OkHttpTransport(
     private fun disconnected() {
         socket = null
         connected = false
-        statusHandler(Disconnected).apply {  }
-        // TODO: maybe implement a period retry
+        statusHandler(Disconnected)
     }
 
     private fun tryExec(block: () -> Unit) {
