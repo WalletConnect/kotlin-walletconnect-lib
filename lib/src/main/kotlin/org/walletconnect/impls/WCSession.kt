@@ -148,16 +148,18 @@ class WCSession(
 
     private fun handleStatus(status: Session.Transport.Status) {
         when (status) {
-            Session.Transport.Status.CONNECTED ->
+            Session.Transport.Status.Connected -> {
                 // Register for all messages for this client
                 transport.send(
-                        Session.Transport.Message(
-                                clientData.id, "sub", ""
-                        )
+                    Session.Transport.Message(
+                        clientData.id, "sub", ""
+                    )
                 )
-            Session.Transport.Status.DISCONNECTED -> {
+            }
+            Session.Transport.Status.Disconnected -> {
             } // noop
         }
+        sessionCallbacks.forEach { nullOnThrow { it.transportStatus(status) } }
     }
 
     private fun handleMessage(message: Session.Transport.Message) {
