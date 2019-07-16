@@ -17,11 +17,11 @@ class OkHttpTransport(
     moshi: Moshi
 ) : Session.Transport, WebSocketListener() {
 
-    private val adapter = moshi.adapter<Map<String, String>>(
+    private val adapter = moshi.adapter<Map<String, Any>>(
         Types.newParameterizedType(
             Map::class.java,
             String::class.java,
-            String::class.java
+            Any::class.java
         )
     )
 
@@ -89,10 +89,10 @@ class OkHttpTransport(
         }
     }
 
-    private fun Map<String, String>.toMessage(): Session.Transport.Message? {
-        val topic = get("topic") ?: return null
-        val type = get("type") ?: return null
-        val payload = get("payload") ?: return null
+    private fun Map<String, Any>.toMessage(): Session.Transport.Message? {
+        val topic = get("topic")?.toString() ?: return null
+        val type = get("type")?.toString() ?: return null
+        val payload = get("payload")?.toString() ?: return null
         return Session.Transport.Message(topic, type, payload)
     }
 

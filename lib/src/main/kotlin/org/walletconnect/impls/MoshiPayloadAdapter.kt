@@ -127,8 +127,7 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
         val data = params.firstOrNull() as? Map<*, *> ?: throw IllegalArgumentException("Invalid params")
         val from = data["from"] as? String ?: throw IllegalArgumentException("from key missing")
         val to = data["to"] as? String ?: throw IllegalArgumentException("to key missing")
-        val nonce =
-            data["nonce"] as? String ?: (data["nonce"] as? Double)?.toLong()?.toString()
+        val nonce = data["nonce"] as? String ?: (data["nonce"] as? Double)?.toLong()?.toString()
         val gasPrice = data["gasPrice"] as? String
         val gasLimit = data["gasLimit"] as? String
         val value = data["value"] as? String ?: throw IllegalArgumentException("value key missing")
@@ -200,7 +199,7 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
         )
 
     private fun Session.MethodCall.Response.toMap() =
-        mutableMapOf(
+        mutableMapOf<String, Any>(
             "id" to id,
             "jsonrpc" to "2.0"
         ).apply {
