@@ -35,6 +35,10 @@ class WalletConnectBridgeRepositoryIntegrationTest {
         )
 
         session.addCallback(object : Session.Callback {
+            override fun transportStatus(status: Session.Transport.Status) {
+                System.out.println("transportStatus: $status")
+            }
+
             override fun handleMethodCall(call: Session.MethodCall) {
                 System.out.println("handleMethodCall: $call")
             }

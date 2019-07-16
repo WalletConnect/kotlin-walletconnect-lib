@@ -4,14 +4,16 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import okhttp3.*
 import org.walletconnect.Session
+import org.walletconnect.Session.Transport.Status.*
+import java.lang.Exception
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
 class OkHttpTransport(
-    val client: OkHttpClient,
-    val serverUrl: String,
-    val statusHandler: (Session.Transport.Status) -> Unit,
-    val messageHandler: (Session.Transport.Message) -> Unit,
+    private val client: OkHttpClient,
+    private val serverUrl: String,
+    private val statusHandler: (Session.Transport.Status) -> Unit,
+    private val messageHandler: (Session.Transport.Message) -> Unit,
     moshi: Moshi
 ) : Session.Transport, WebSocketListener() {
 
@@ -28,8 +30,7 @@ class OkHttpTransport(
     private var connected: Boolean = false
     private val queue: Queue<Session.Transport.Message> = ConcurrentLinkedQueue()
 
-    override fun status(): Session.Transport.Status =
-        if (connected) Session.Transport.Status.CONNECTED else Session.Transport.Status.DISCONNECTED
+    override fun isConnected(): Boolean = connected
 
     override fun connect(): Boolean {
         synchronized(socketLock) {
@@ -52,7 +53,9 @@ class OkHttpTransport(
         if (connected) {
             socket?.let { s ->
                 queue.poll()?.let {
-                    s.send(adapter.toJson(it.toMap()))
+                    tryExec {
+                        s.send(adapter.toJson(it.toMap()))
+                    }
                     drainQueue() // continue draining until there are no more messages
                 }
             }
@@ -76,12 +79,14 @@ class OkHttpTransport(
         super.onOpen(webSocket, response)
         connected = true
         drainQueue()
-        statusHandler(Session.Transport.Status.CONNECTED)
+        statusHandler(Connected)
     }
 
     override fun onMessage(webSocket: WebSocket, text: String) {
         super.onMessage(webSocket, text)
-        adapter.fromJson(text)?.toMessage()?.let { messageHandler(it) }
+        tryExec {
+            adapter.fromJson(text)?.toMessage()?.let { messageHandler(it) }
+        }
     }
 
     private fun Map<String, String>.toMessage(): Session.Transport.Message? {
@@ -93,6 +98,7 @@ class OkHttpTransport(
 
     override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
         super.onFailure(webSocket, t, response)
+        statusHandler(Error(t))
         disconnected()
     }
 
@@ -104,8 +110,15 @@ class OkHttpTransport(
     private fun disconnected() {
         socket = null
         connected = false
-        statusHandler(Session.Transport.Status.DISCONNECTED)
-        // TODO: maybe implement a period retry
+        statusHandler(Disconnected)
+    }
+
+    private fun tryExec(block: () -> Unit) {
+        try {
+            block()
+        } catch (e: Exception) {
+            statusHandler(Error(e))
+        }
     }
 
     class Builder(val client: OkHttpClient, val moshi: Moshi) :

@@ -53,6 +53,7 @@ interface Session {
     }
 
     interface Callback {
+        fun transportStatus(status: Transport.Status)
 
         fun handleMethodCall(call: MethodCall)
 
@@ -71,15 +72,16 @@ interface Session {
 
         fun connect(): Boolean
 
-        fun send(message: Message)
+        fun isConnected(): Boolean
 
-        fun status(): Status
+        fun send(message: Message)
 
         fun close()
 
-        enum class Status {
-            CONNECTED,
-            DISCONNECTED
+        sealed class Status {
+            object Connected: Status()
+            object Disconnected: Status()
+            data class Error(val throwable: Throwable): Status()
         }
 
         data class Message(
