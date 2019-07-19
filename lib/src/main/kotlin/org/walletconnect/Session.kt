@@ -65,7 +65,7 @@ interface Session {
         data class Error(val throwable: Throwable): Status()
     }
 
-    data class TransportError(override val cause: Throwable): RuntimeException("Transport exception cause by $cause", cause)
+    data class TransportError(override val cause: Throwable): RuntimeException("Transport exception caused by $cause", cause)
 
     interface PayloadAdapter {
         fun parse(payload: String, key: String): MethodCall
