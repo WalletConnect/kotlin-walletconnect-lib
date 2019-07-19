@@ -19,7 +19,7 @@ interface Session {
 
     fun approveRequest(id: Long, response: Any)
     fun rejectRequest(id: Long, errorCode: Long, errorMsg: String)
-    fun performMethodCall(call: MethodCall, callback: ((Session.MethodCall.Response) -> Unit)? = null)
+    fun performMethodCall(call: MethodCall, callback: ((MethodCall.Response) -> Unit)? = null)
 
     fun addCallback(cb: Callback)
     fun removeCallback(cb: Callback)
@@ -53,14 +53,19 @@ interface Session {
     }
 
     interface Callback {
-        fun transportStatus(status: Transport.Status)
-
-        fun handleMethodCall(call: MethodCall)
-
-        fun sessionApproved()
-
-        fun sessionClosed()
+        fun onStatus(status: Status)
+        fun onMethodCall(call: MethodCall)
     }
+
+    sealed class Status {
+        object Connected: Status()
+        object Disconnected: Status()
+        object Approved: Status()
+        object Closed: Status()
+        data class Error(val throwable: Throwable): Status()
+    }
+
+    data class TransportError(override val cause: Throwable): RuntimeException("Transport exception caused by $cause", cause)
 
     interface PayloadAdapter {
         fun parse(payload: String, key: String): MethodCall

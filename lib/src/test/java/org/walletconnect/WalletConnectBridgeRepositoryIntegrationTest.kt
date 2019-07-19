@@ -23,7 +23,7 @@ class WalletConnectBridgeRepositoryIntegrationTest {
         val sessionDir = File("build/tmp/").apply { mkdirs() }
         val sessionStore = FileWCSessionStore(File(sessionDir, "test_store.json").apply { createNewFile() }, moshi)
         val uri =
-            "wc:56f58ba1-8012-40c1-a5be-cf24b1f4884f@1?bridge=https%3A%2F%2Fbridge.walletconnect.org&key=60f6dddb470b32863dba98ba3c7d4d8965ad6dc6ac205108c873d2cbd0ba7f1e"
+            "wc:ffd70e47-8634-4eba-95e9-81d7d1ee3bc3@1?bridge=https%3A%2F%2Fbridge.walletconnect.org&key=10d842ec755f67ed37de894811d2b641e1e752f3a91cec05d64ed4b7735cb8c3"
 
         val config = Session.Config.fromWCUri(uri)
         val session = WCSession(
@@ -35,27 +35,20 @@ class WalletConnectBridgeRepositoryIntegrationTest {
         )
 
         session.addCallback(object : Session.Callback {
-            override fun transportStatus(status: Session.Transport.Status) {
-                System.out.println("transportStatus: $status")
+            override fun onStatus(status: Session.Status) {
+                System.out.println("onStatus: $status")
             }
 
-            override fun handleMethodCall(call: Session.MethodCall) {
-                System.out.println("handleMethodCall: $call")
+            override fun onMethodCall(call: Session.MethodCall) {
+                System.out.println("onMethodCall: $call")
             }
-
-            override fun sessionApproved() {
-                System.out.println("sessionApproved()")
-            }
-
-            override fun sessionClosed() {
-                System.out.println("sessionClosed()")
-            }
-
         })
         session.init()
         Thread.sleep(2000)
         session.approve(listOf("0x00000000000000000000000000000000DeaDBEAF"), 4)
-        Thread.sleep(100000)
+        Thread.sleep(10000)
+        session.kill()
+        Thread.sleep(2000)
     }
 }
 
