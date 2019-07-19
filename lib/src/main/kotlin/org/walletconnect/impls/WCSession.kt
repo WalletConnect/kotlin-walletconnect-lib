@@ -71,6 +71,16 @@ class WCSession(
         sessionCallbacks.clear()
     }
 
+    private fun propagateToCallbacks(action: Session.Callback.() -> Unit) {
+        sessionCallbacks.forEach {
+            try { it.action() }
+            catch (t: Throwable) {
+                // If error propagation fails, don't try again
+                nullOnThrow { it.onStatus(Session.Status.Error(t)) }
+            }
+        }
+    }
+
     override fun peerMeta(): Session.PeerMeta? = peerMeta
 
     override fun approvedAccounts(): List<String>? = approvedAccounts
@@ -96,7 +106,7 @@ class WCSession(
                     approvedAccounts = params.accounts
                     chainId = params.chainId
                     storeSession()
-                    sessionCallbacks.forEach { nullOnThrow { if (params.approved) it.sessionApproved() else it.sessionClosed() } }
+                    propagateToCallbacks { onStatus(if (params.approved) Session.Status.Approved else Session.Status.Closed) }
                 }
             })
             handshakeId = requestId
@@ -111,7 +121,7 @@ class WCSession(
         val params = Session.SessionParams(true, chainId, accounts, clientData).intoMap()
         send(Session.MethodCall.Response(handshakeId, params))
         storeSession()
-        sessionCallbacks.forEach { nullOnThrow { it.sessionApproved() } }
+        propagateToCallbacks { onStatus(Session.Status.Approved) }
     }
 
     override fun update(accounts: List<String>, chainId: Long) {
@@ -156,10 +166,14 @@ class WCSession(
                     )
                 )
             }
-            Session.Transport.Status.Disconnected -> {
-            } // noop
         }
-        sessionCallbacks.forEach { nullOnThrow { it.transportStatus(status) } }
+        propagateToCallbacks {
+            onStatus(when(status) {
+                Session.Transport.Status.Connected -> Session.Status.Connected
+                Session.Transport.Status.Disconnected -> Session.Status.Disconnected
+                is Session.Transport.Status.Error -> Session.Status.Error(Session.TransportError(status.throwable))
+            })
+        }
     }
 
     private fun handleMessage(message: Session.Transport.Message) {
@@ -200,11 +214,7 @@ class WCSession(
         }
 
         if (accountToCheck?.let { accountCheck(data.id(), it) } != false) {
-            sessionCallbacks.forEach {
-                nullOnThrow {
-                    it.handleMethodCall(data)
-                }
-            }
+            propagateToCallbacks { onMethodCall(data) }
         }
     }
 
@@ -217,6 +227,7 @@ class WCSession(
     }
 
     private fun handlePayloadError(e: Exception) {
+        propagateToCallbacks { Session.Status.Error(e) }
         (e as? Session.MethodCallException)?.let {
             rejectRequest(it.id, it.code, it.message ?: "Unknown error")
         }
@@ -227,7 +238,7 @@ class WCSession(
         approvedAccounts = null
         chainId = null
         internalClose()
-        sessionCallbacks.forEach { nullOnThrow { it.sessionClosed() } }
+        propagateToCallbacks { onStatus(Session.Status.Closed) }
     }
 
     private fun storeSession() {
