@@ -9,7 +9,7 @@ repositories {
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$versions.kotlin"
 
-    implementation "com.github.komputing:khex:0.6"
+    implementation "com.github.komputing:khex:1.0.0-RC6"
 
     implementation 'org.bouncycastle:bcprov-jdk15on:1.64'
 
@@ -20,11 +20,9 @@ dependencies {
 
     implementation "com.squareup.okhttp3:okhttp:$versions.okhttp"
 
-    implementation group: 'org.slf4j', name: 'slf4j-log4j12', version: "1.7.25"
-
     testImplementation 'org.assertj:assertj-core:3.14.0'
-    testCompile 'org.junit.jupiter:junit-jupiter-api:5.3.2'
-    testCompile 'org.junit.jupiter:junit-jupiter-params:5.3.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.3.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.3.2'
     testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.3.2'
 
 

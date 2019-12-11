@@ -11,11 +11,10 @@ import org.bouncycastle.crypto.paddings.PKCS7Padding
 import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher
 import org.bouncycastle.crypto.params.KeyParameter
 import org.bouncycastle.crypto.params.ParametersWithIV
+import org.komputing.khex.decode
+import org.komputing.khex.extensions.toNoPrefixHexString
 import org.walletconnect.Session
-import org.walletconnect.nullOnThrow
 import org.walletconnect.types.*
-import org.walleth.khex.hexToByteArray
-import org.walleth.khex.toNoPrefixHexString
 import java.security.SecureRandom
 
 class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
@@ -42,12 +41,12 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
             padding
         )
         val ivAndKey = ParametersWithIV(
-            KeyParameter(key.hexToByteArray()),
-            encryptedPayload.iv.hexToByteArray()
+            KeyParameter(decode(key)),
+            decode(encryptedPayload.iv)
         )
         aes.init(false, ivAndKey)
 
-        val encryptedData = encryptedPayload.data.hexToByteArray()
+        val encryptedData = decode(encryptedPayload.data)
         val minSize = aes.getOutputSize(encryptedData.size)
         val outBuf = ByteArray(minSize)
         var len = aes.processBytes(encryptedData, 0, encryptedData.size, outBuf, 0)
@@ -58,7 +57,7 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
 
     override fun prepare(data: Session.MethodCall, key: String): String {
         val bytesData = data.toBytes()
-        val hexKey = key.hexToByteArray()
+        val hexKey = decode(key)
         val iv = createRandomBytes(16)
 
         val padding = PKCS7Padding()
