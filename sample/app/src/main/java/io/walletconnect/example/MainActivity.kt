@@ -18,10 +18,21 @@ class MainActivity : Activity(), Session.Callback {
     private var txRequest: Long? = null
     private val uiScope = CoroutineScope(Dispatchers.Main)
 
-    override fun handleMethodCall(call: Session.MethodCall) {
+    override fun onStatus(status: Session.Status) {
+        when(status) {
+            Session.Status.Approved -> sessionApproved()
+            Session.Status.Closed -> sessionClosed()
+            Session.Status.Connected,
+            Session.Status.Disconnected,
+            is Session.Status.Error -> {
+                // Do Stuff
+            }
+        }
     }
 
-    override fun sessionApproved() {
+    override fun onMethodCall(call: Session.MethodCall) {
+    }
+    private fun sessionApproved() {
         uiScope.launch {
             screen_main_status.text = "Connected: ${ExampleApplication.session.approvedAccounts()}"
             screen_main_connect_button.visibility = View.GONE
@@ -30,7 +41,7 @@ class MainActivity : Activity(), Session.Callback {
         }
     }
 
-    override fun sessionClosed() {
+    private fun sessionClosed() {
         uiScope.launch {
             screen_main_status.text = "Disconnected"
             screen_main_connect_button.visibility = View.VISIBLE
@@ -70,7 +81,7 @@ class MainActivity : Activity(), Session.Callback {
                             null,
                             null,
                             "0x5AF3107A4000",
-                            ""bu
+                            ""
                     ),
                     ::handleResponse
             )

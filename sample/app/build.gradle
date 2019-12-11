@@ -51,7 +51,7 @@ dependencies {
 
     implementation "org.java-websocket:Java-WebSocket:1.4.0"
 
-    implementation "com.github.walleth:khex:0.6"
+    implementation "com.github.komputing:khex:1.0.0-RC6"
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${versions.kotlin}"
 

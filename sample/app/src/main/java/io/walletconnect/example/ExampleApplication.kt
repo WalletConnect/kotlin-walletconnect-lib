@@ -4,10 +4,10 @@ import androidx.multidex.MultiDexApplication
 import com.squareup.moshi.Moshi
 import io.walletconnect.example.server.BridgeServer
 import okhttp3.OkHttpClient
+import org.komputing.khex.extensions.toNoPrefixHexString
 import org.walletconnect.Session
 import org.walletconnect.impls.*
 import org.walletconnect.nullOnThrow
-import org.walleth.khex.toNoPrefixHexString
 import java.io.File
 import java.util.*
 
