@@ -20,7 +20,7 @@ dependencies {
 
     implementation "com.squareup.okhttp3:okhttp:$versions.okhttp"
 
-    testImplementation 'org.assertj:assertj-core:3.14.0'
+    testImplementation 'org.assertj:assertj-core:3.15.0'
     testImplementation "org.junit.jupiter:junit-jupiter-api:${versions.jupiter}"
     testImplementation "org.junit.jupiter:junit-jupiter-params:${versions.jupiter}"
     testRuntime "org.junit.jupiter:junit-jupiter-engine:${versions.jupiter}"
