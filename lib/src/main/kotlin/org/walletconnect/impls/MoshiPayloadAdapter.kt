@@ -129,7 +129,7 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
         val nonce = data["nonce"] as? String ?: (data["nonce"] as? Double)?.toLong()?.toString()
         val gasPrice = data["gasPrice"] as? String
         // "gasLimit" was used in older versions of the library, kept here as a fallback for compatibility
-        val gasLimit = data["gas"] as? String ?: data["gasPrice"] as? String
+        val gasLimit = data["gas"] as? String ?: data["gasLimit"] as? String
         val value = data["value"] as? String ?: "0x0"
         val txData = data["data"] as? String ?: throw IllegalArgumentException("data key missing")
         return Session.MethodCall.SendTransaction(getId(), from, to, nonce, gasPrice, gasLimit, value, txData)
