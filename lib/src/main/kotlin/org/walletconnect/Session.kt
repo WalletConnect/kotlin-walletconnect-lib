@@ -121,7 +121,7 @@ interface Session {
         data class SendTransaction(
             val id: Long,
             val from: String,
-            val to: String,
+            val to: String?,
             val nonce: String?,
             val gasPrice: String?,
             val gasLimit: String?,
