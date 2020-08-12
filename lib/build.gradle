@@ -9,7 +9,7 @@ repositories {
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$versions.kotlin"
 
-    implementation "com.github.komputing:khex:1.0.0-RC6"
+    implementation "com.github.komputing:khex:1.0.0"
 
     implementation 'org.bouncycastle:bcprov-jdk15on:1.64'
 
