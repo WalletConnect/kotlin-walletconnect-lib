@@ -25,7 +25,7 @@ class WalletConnectBridgeRepositoryIntegrationTest {
         val uri =
             "wc:ffd70e47-8634-4eba-95e9-81d7d1ee3bc3@1?bridge=https%3A%2F%2Fbridge.walletconnect.org&key=10d842ec755f67ed37de894811d2b641e1e752f3a91cec05d64ed4b7735cb8c3"
 
-        val config = Session.Config.fromWCUri(uri)
+        val config = Session.Config.fromWCUri(uri).toFullyQualifiedConfig()
         val session = WCSession(
             config,
             MoshiPayloadAdapter(moshi),
