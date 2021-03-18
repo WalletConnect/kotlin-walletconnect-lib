@@ -2,7 +2,7 @@ apply plugin: "kotlin"
 apply plugin: 'maven'
 
 repositories {
-    jcenter()
+    mavenCentral()
     maven { url 'https://jitpack.io' }
 }
 
