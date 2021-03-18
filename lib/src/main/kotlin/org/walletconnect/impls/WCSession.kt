@@ -219,7 +219,7 @@ class WCSession(
     }
 
     private fun accountCheck(id: Long, address: String): Boolean {
-        approvedAccounts?.find { it.toLowerCase() == address.toLowerCase() } ?: run {
+        approvedAccounts?.find { it.equals(address, ignoreCase = true) } ?: run {
             handlePayloadError(Session.MethodCallException.InvalidAccount(id, address))
             return false
         }
