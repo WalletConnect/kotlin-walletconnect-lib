@@ -11,7 +11,7 @@ dependencies {
 
     implementation "com.github.komputing:khex:1.0.0"
 
-    implementation 'org.bouncycastle:bcprov-jdk15on:1.66'
+    implementation "org.bouncycastle:bcprov-jdk15to18:1.68"
 
     implementation 'com.squareup.moshi:moshi:1.8.0'
     // TODO: it would be better to use the generated adapter by moshi
