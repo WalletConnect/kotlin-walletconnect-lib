@@ -23,7 +23,7 @@ class MainActivity : Activity(), Session.Callback {
             Session.Status.Approved -> sessionApproved()
             Session.Status.Closed -> sessionClosed()
             Session.Status.Connected -> {
-                navigateToWallet()
+                requestConnectionToWallet()
             }
             Session.Status.Disconnected,
             is Session.Status.Error -> {
@@ -35,9 +35,15 @@ class MainActivity : Activity(), Session.Callback {
     override fun onMethodCall(call: Session.MethodCall) {
     }
 
-    private fun navigateToWallet() {
+    private fun requestConnectionToWallet() {
         val i = Intent(Intent.ACTION_VIEW)
         i.data = Uri.parse(ExampleApplication.config.toWCUri())
+        startActivity(i)
+    }
+
+    private fun navigateToWallet() {
+        val i = Intent(Intent.ACTION_VIEW)
+        i.data = Uri.parse("wc:")
         startActivity(i)
     }
 
