@@ -14,11 +14,11 @@ import java.util.concurrent.ConcurrentHashMap
 
 class BridgeServer(moshi: Moshi) : WebSocketServer(InetSocketAddress(PORT)) {
 
-    private val adapter = moshi.adapter<Map<String, String>>(
+    private val adapter = moshi.adapter<Map<String, Any>>(
             Types.newParameterizedType(
                     Map::class.java,
                     String::class.java,
-                    String::class.java
+                    Any::class.java
             )
     )
 
@@ -41,8 +41,8 @@ class BridgeServer(moshi: Moshi) : WebSocketServer(InetSocketAddress(PORT)) {
             conn ?: error("Unknown socket")
             message?.also {
                 val msg = adapter.fromJson(it) ?: error("Invalid message")
-                val type: String = msg["type"] ?: error("Type not found")
-                val topic: String = msg["topic"] ?: error("Topic not found")
+                val type: String = msg["type"] as String? ?: error("Type not found")
+                val topic: String = msg["topic"] as String? ?: error("Topic not found")
                 when (type) {
                     "pub" -> {
                         var sendMessage = false
