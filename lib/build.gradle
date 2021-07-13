@@ -9,18 +9,19 @@ repositories {
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$versions.kotlin"
 
-    implementation "com.github.komputing:khex:1.1.0"
+    implementation "com.github.komputing:khex:${versions.khex}"
 
-    implementation "org.bouncycastle:bcprov-jdk15to18:1.68"
+    implementation "org.bouncycastle:bcprov-jdk15to18:${versions.bcprov}"
 
-    implementation 'com.squareup.moshi:moshi:1.8.0'
+    implementation "com.google.code.gson:gson:${versions.gson}"
+    implementation "com.squareup.moshi:moshi:${versions.moshi}"
     // TODO: it would be better to use the generated adapter by moshi
     // but for that we should move the implementations in different modules
     //kapt "com.squareup.moshi:moshi-kotlin-codegen:$versions.moshi"
 
     implementation "com.squareup.okhttp3:okhttp:$versions.okhttp"
 
-    testImplementation 'org.assertj:assertj-core:3.19.0'
+    testImplementation "org.assertj:assertj-core:${versions.assertjCore}"
     testImplementation "org.junit.jupiter:junit-jupiter-api:${versions.jupiter}"
     testImplementation "org.junit.jupiter:junit-jupiter-params:${versions.jupiter}"
     testRuntime "org.junit.jupiter:junit-jupiter-engine:${versions.jupiter}"
