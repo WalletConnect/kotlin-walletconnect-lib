@@ -1,2 +1,11 @@
-include ':lib', ':sample:app'
+// Repositories used by convention by every subproject can be declared here.
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        maven { url "https://jitpack.io" }
+    }
+}
 
+include ':lib', ':sample:app'

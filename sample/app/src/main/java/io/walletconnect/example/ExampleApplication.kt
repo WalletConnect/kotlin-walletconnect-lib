@@ -1,6 +1,6 @@
 package io.walletconnect.example
 
-import androidx.multidex.MultiDexApplication
+import android.app.Application
 import com.squareup.moshi.Moshi
 import io.walletconnect.example.server.BridgeServer
 import okhttp3.OkHttpClient
@@ -11,7 +11,7 @@ import org.walletconnect.nullOnThrow
 import java.io.File
 import java.util.*
 
-class ExampleApplication : MultiDexApplication() {
+class ExampleApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         initMoshi()

@@ -1,19 +1,15 @@
-apply plugin: "kotlin"
-apply plugin: 'maven'
-
-repositories {
-    mavenCentral()
-    maven { url 'https://jitpack.io' }
+plugins {
+    id 'java-library'
+    id 'kotlin'
+    id 'maven-publish'
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:$versions.kotlin"
+    implementation "com.github.komputing:khex:1.1.2"
 
-    implementation "com.github.komputing:khex:1.1.0"
+    implementation "org.bouncycastle:bcprov-jdk15to18:1.69"
 
-    implementation "org.bouncycastle:bcprov-jdk15to18:1.68"
-
-    implementation 'com.squareup.moshi:moshi:1.8.0'
+    implementation "com.squareup.moshi:moshi:${versions.moshi}"
     // TODO: it would be better to use the generated adapter by moshi
     // but for that we should move the implementations in different modules
     //kapt "com.squareup.moshi:moshi-kotlin-codegen:$versions.moshi"
@@ -21,10 +17,13 @@ dependencies {
     implementation "com.squareup.okhttp3:okhttp:$versions.okhttp"
 
     testImplementation 'org.assertj:assertj-core:3.19.0'
-    testImplementation "org.junit.jupiter:junit-jupiter-api:${versions.jupiter}"
-    testImplementation "org.junit.jupiter:junit-jupiter-params:${versions.jupiter}"
-    testRuntime "org.junit.jupiter:junit-jupiter-engine:${versions.jupiter}"
 
+    // (Required) Writing and executing Unit Tests on the JUnit Platform
+    testImplementation "org.junit.jupiter:junit-jupiter-api:${versions.jupiter}"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${versions.jupiter}"
+
+    // (Optional) If you need "Parameterized Tests"
+    testImplementation "org.junit.jupiter:junit-jupiter-params:${versions.jupiter}"
 
     testImplementation "com.squareup.okhttp3:mockwebserver:$versions.okhttp"
 }
@@ -32,3 +31,25 @@ dependencies {
 test {
     useJUnitPlatform()
 }
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            // Creates a Maven publication called “walletconnectPublication”.
+            walletconnectPublication(MavenPublication) {
+                // Applies the component for the debug build variant.
+                from components.java
+
+                groupId = 'com.github.WalletConnect'
+                artifactId = 'kotlin-walletconnect-lib'
+                version = '0.9.7'
+            }
+        }
+    }
+}
+
