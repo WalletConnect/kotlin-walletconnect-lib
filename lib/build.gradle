@@ -5,7 +5,8 @@ plugins {
 }
 
 dependencies {
-    implementation "com.github.komputing:khex:1.1.2"
+    // KHex is a Kotlin multiplatform library to deal with hexadecimal encoding and decoding.
+    implementation "com.github.komputing:khex:$versions.khex"
 
     implementation "org.bouncycastle:bcprov-jdk15to18:1.69"
 
@@ -13,6 +14,7 @@ dependencies {
     // TODO: it would be better to use the generated adapter by moshi
     // but for that we should move the implementations in different modules
     //kapt "com.squareup.moshi:moshi-kotlin-codegen:$versions.moshi"
+    implementation "com.squareup.moshi:moshi-kotlin:$versions.moshi"
 
     implementation "com.squareup.okhttp3:okhttp:$versions.okhttp"
 

@@ -23,6 +23,8 @@ buildscript {
             androidx_test_ext         : '1.1.0',
             androidx_recycler_view    : '1.0.0',
             androidx_room             : '2.0.0',
+
+            khex                      : '1.1.2'
         ]
     }
 

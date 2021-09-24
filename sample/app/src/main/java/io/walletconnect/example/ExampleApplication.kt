@@ -2,6 +2,7 @@ package io.walletconnect.example
 
 import android.app.Application
 import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import io.walletconnect.example.server.BridgeServer
 import okhttp3.OkHttpClient
 import org.komputing.khex.extensions.toNoPrefixHexString
@@ -25,7 +26,7 @@ class ExampleApplication : Application() {
     }
 
     private fun initMoshi() {
-        moshi = Moshi.Builder().build()
+        moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
     }
 
 

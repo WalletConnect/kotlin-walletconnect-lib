@@ -62,11 +62,14 @@ dependencies {
 
     implementation "org.java-websocket:Java-WebSocket:1.5.2"
 
-    implementation "com.github.komputing:khex:$versions.k"
+    // KHex is a Kotlin multiplatform library to deal with hexadecimal encoding and decoding.
+    implementation "com.github.komputing:khex:$versions.khex"
 
     implementation "androidx.appcompat:appcompat:$versions.androidx_app_compat"
 
     implementation 'com.squareup.moshi:moshi:1.12.0'
+    implementation "com.squareup.moshi:moshi-kotlin:$versions.moshi"
+
     implementation "com.squareup.okhttp3:okhttp:$versions.okhttp"
 
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0'
