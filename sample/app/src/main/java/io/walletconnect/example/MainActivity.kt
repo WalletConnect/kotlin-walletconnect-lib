@@ -4,9 +4,10 @@ import android.app.Activity
 import android.os.Bundle
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import android.view.View
-import android.widget.Button
 import android.widget.TextView
+import io.walletconnect.example.databinding.ScreenMainBinding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -16,19 +17,22 @@ import org.walletconnect.nullOnThrow
 
 class MainActivity : Activity(), Session.Callback {
 
-    private var txRequest: Long? = null
-    private val uiScope = CoroutineScope(Dispatchers.Main)
+    private var mTxRequest: Long? = null
+    private val mUiScope = CoroutineScope(Dispatchers.Main)
+    private lateinit var mScreenMainBinding: ScreenMainBinding
 
     override fun onStatus(status: Session.Status) {
         when(status) {
-            Session.Status.Approved -> sessionApproved()
-            Session.Status.Closed -> sessionClosed()
+            Session.Status.Approved -> adaptUIAfterSessionApproved()
+            Session.Status.Closed -> adaptUIAfterSessionClosed()
             Session.Status.Connected -> {
                 requestConnectionToWallet()
             }
-            Session.Status.Disconnected,
+            Session.Status.Disconnected -> {
+                Log.e("+++", "Disconnected")
+            }
             is Session.Status.Error -> {
-                // Do Stuff
+                Log.e("+++", "Error:" + status.throwable.localizedMessage)
             }
         }
     }
@@ -48,40 +52,41 @@ class MainActivity : Activity(), Session.Callback {
         startActivity(i)
     }
 
-    private fun sessionApproved() {
-        uiScope.launch {
-            findViewById<TextView>(R.id.screen_main_status).text = "Connected: ${ExampleApplication.session.approvedAccounts()}"
-            findViewById<Button>(R.id.screen_main_connect_button).visibility = View.GONE
-            findViewById<Button>(R.id.screen_main_disconnect_button).visibility = View.VISIBLE
-            findViewById<Button>(R.id.screen_main_tx_button).visibility = View.VISIBLE
+    private fun adaptUIAfterSessionApproved() {
+        mUiScope.launch {
+            mScreenMainBinding.screenMainStatus.text = "Connected: ${ExampleApplication.session.approvedAccounts()}"
+            mScreenMainBinding.screenMainConnectButton.visibility = View.GONE
+            mScreenMainBinding.screenMainDisconnectButton.visibility = View.VISIBLE
+            mScreenMainBinding.screenMainTxButton.visibility = View.VISIBLE
         }
     }
 
-    private fun sessionClosed() {
-        uiScope.launch {
-            findViewById<TextView>(R.id.screen_main_status).text = "Disconnected"
-            findViewById<Button>(R.id.screen_main_connect_button).visibility = View.VISIBLE
-            findViewById<Button>(R.id.screen_main_disconnect_button).visibility = View.GONE
-            findViewById<Button>(R.id.screen_main_tx_button).visibility = View.GONE
+    private fun adaptUIAfterSessionClosed() {
+        mUiScope.launch {
+            mScreenMainBinding.screenMainStatus.text = "Disconnected"
+            mScreenMainBinding.screenMainConnectButton.visibility = View.VISIBLE
+            mScreenMainBinding.screenMainDisconnectButton.visibility = View.GONE
+            mScreenMainBinding.screenMainTxButton.visibility = View.GONE
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.screen_main)
+        mScreenMainBinding = ScreenMainBinding.inflate(layoutInflater)
+        setContentView(mScreenMainBinding.root)
     }
 
     override fun onStart() {
         super.onStart()
         initialSetup()
-        findViewById<Button>(R.id.screen_main_connect_button).setOnClickListener {
+        mScreenMainBinding.screenMainConnectButton.setOnClickListener {
             ExampleApplication.resetSession()
             ExampleApplication.session.addCallback(this)
         }
-        findViewById<Button>(R.id.screen_main_disconnect_button).setOnClickListener {
+        mScreenMainBinding.screenMainDisconnectButton.setOnClickListener {
             ExampleApplication.session.kill()
         }
-        findViewById<Button>(R.id.screen_main_tx_button).setOnClickListener {
+        mScreenMainBinding.screenMainTxButton.setOnClickListener {
             val from = ExampleApplication.session.approvedAccounts()?.first()
                     ?: return@setOnClickListener
             val txRequest = System.currentTimeMillis()
@@ -98,21 +103,23 @@ class MainActivity : Activity(), Session.Callback {
                     ),
                     ::handleResponse
             )
-            this.txRequest = txRequest
+            this.mTxRequest = txRequest
             navigateToWallet()
         }
     }
 
     private fun initialSetup() {
+        // if ExampleApplication.session is not initialized then return
         val session = nullOnThrow { ExampleApplication.session } ?: return
+
         session.addCallback(this)
-        sessionApproved()
+        adaptUIAfterSessionApproved()
     }
 
     private fun handleResponse(resp: Session.MethodCall.Response) {
-        if (resp.id == txRequest) {
-            txRequest = null
-            uiScope.launch {
+        if (resp.id == mTxRequest) {
+            mTxRequest = null
+            mUiScope.launch {
                 val textView = findViewById<TextView>(R.id.screen_main_response)
                 textView.visibility = View.VISIBLE
                 textView.text = "Last response: " + ((resp.result as? String) ?: "Unknown response")
