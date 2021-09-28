@@ -1,14 +1,12 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
 
 android {
     compileSdkVersion versions.compileSdk
-    buildToolsVersion versions.buildTools
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_7
-        targetCompatibility JavaVersion.VERSION_1_7
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
 
     defaultConfig {
@@ -19,49 +17,66 @@ android {
         versionName '1.0.0'
     }
 
-    dexOptions {
-        jumboMode = true
-    }
-
     lintOptions {
         textReport true
         textOutput 'stdout'
+        checkDependencies true
     }
 
+    /**
+     * The buildTypes block is where you can configure multiple build types.
+     * By default, the build system defines two build types: debug and release. The
+     * debug build type is not explicitly shown in the default build configuration,
+     * but it includes debugging tools and is signed with the debug key. The release
+     * build type applies Proguard settings and is not signed by default.
+     */
     buildTypes {
+
+        /**
+         * By default, Android Studio configures the release build type to enable code
+         * shrinking, using minifyEnabled, and specifies the default Proguard rules file.
+         */
         debug {
             applicationIdSuffix ".debug"
             versionNameSuffix "-debug"
             minifyEnabled false
         }
-    }
-}
 
-repositories {
-    repositories {
-        google()
-        jcenter()
-        mavenCentral()
-        maven { url 'https://www.jitpack.io' }
+        release {
+            minifyEnabled true // Enables code shrinking for the release build type.
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    // The kotlinx-coroutines-core artifact contains a resource file that is not required for the coroutines to operate normally and is only used by the debugger. To exclude it at no loss of functionality, add the following snippet to the android block in your Gradle file for the application subproject:
+    // https://github.com/Kotlin/kotlinx.coroutines
+    packagingOptions {
+        resources.excludes += "DebugProbesKt.bin"
+    }
+
+    buildFeatures {
+        viewBinding true
     }
 }
 
 dependencies {
     implementation project(":lib")
+    // Instead of adding ":lib" you could add the url below:
+    //implementation 'com.github.WalletConnect:kotlin-walletconnect-lib:0.9.6'
 
-    implementation "org.java-websocket:Java-WebSocket:1.4.0"
+    implementation "org.java-websocket:Java-WebSocket:1.5.2"
 
-    implementation "com.github.komputing:khex:1.0.0-RC6"
-
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${versions.kotlin}"
+    // KHex is a Kotlin multiplatform library to deal with hexadecimal encoding and decoding.
+    implementation "com.github.komputing:khex:$versions.khex"
 
     implementation "androidx.appcompat:appcompat:$versions.androidx_app_compat"
-    implementation "androidx.multidex:multidex:$versions.multidex"
 
-    implementation 'com.squareup.moshi:moshi:1.8.0'
+    implementation 'com.squareup.moshi:moshi:1.12.0'
+    implementation "com.squareup.moshi:moshi-kotlin:$versions.moshi"
+
     implementation "com.squareup.okhttp3:okhttp:$versions.okhttp"
 
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.0.0'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.0.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.0'
 
 }

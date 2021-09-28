@@ -1,6 +1,7 @@
 package org.walletconnect
 
 import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okhttp3.OkHttpClient
 import org.junit.Test
 import org.walletconnect.impls.FileWCSessionStore
@@ -19,7 +20,7 @@ class WalletConnectBridgeRepositoryIntegrationTest {
     //@Test
     fun approveSession() {
         val client = OkHttpClient.Builder().pingInterval(1000, TimeUnit.MILLISECONDS).build()
-        val moshi = Moshi.Builder().build()
+        val moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
         val sessionDir = File("build/tmp/").apply { mkdirs() }
         val sessionStore = FileWCSessionStore(File(sessionDir, "test_store.json").apply { createNewFile() }, moshi)
         val uri =

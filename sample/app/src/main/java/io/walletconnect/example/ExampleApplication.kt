@@ -1,7 +1,8 @@
 package io.walletconnect.example
 
-import androidx.multidex.MultiDexApplication
+import android.app.Application
 import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import io.walletconnect.example.server.BridgeServer
 import okhttp3.OkHttpClient
 import org.komputing.khex.extensions.toNoPrefixHexString
@@ -11,7 +12,7 @@ import org.walletconnect.nullOnThrow
 import java.io.File
 import java.util.*
 
-class ExampleApplication : MultiDexApplication() {
+class ExampleApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         initMoshi()
@@ -25,7 +26,7 @@ class ExampleApplication : MultiDexApplication() {
     }
 
     private fun initMoshi() {
-        moshi = Moshi.Builder().build()
+        moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
     }
 
 
