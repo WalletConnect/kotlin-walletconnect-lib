@@ -170,6 +170,7 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
                 is Session.MethodCall.SessionUpdate -> this.toMap()
                 is Session.MethodCall.SendTransaction -> this.toMap()
                 is Session.MethodCall.SignMessage -> this.toMap()
+                is Session.MethodCall.PersonalSingMessage -> this.toMap()
                 is Session.MethodCall.Custom -> this.toMap()
             }
         ).toByteArray()
@@ -191,6 +192,17 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
                 "value" to value,
                 "data" to data
             )
+        )
+
+    /**
+     * Extension function that takes a [PersonalSignMessage][org.walletconnect.Session.MethodCall.PersonalSignMessage]
+     * and transforms it to the JSON-formatted String.
+     *
+     * @return a JSON-formatted String
+     */
+    private fun Session.MethodCall.PersonalSignMessage.toMap() =
+        jsonRpc(
+            id, "personal_sign", address, message
         )
 
     private fun Session.MethodCall.SignMessage.toMap() =
