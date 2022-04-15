@@ -147,6 +147,16 @@ interface Session {
                 val data: String
         ) : MethodCall(id)
 
+        /**
+         * Open-ended signing method that allows signing an arbitrary hash, which means it can be
+         * used to sign transactions, or any other data, making it a dangerous phishing risk.
+         *
+         * @see <a href="https://eth.wiki/json-rpc/API#eth_sign">eth_sign</a>
+         *
+         * @param id a unique identifier for the transaction
+         * @param address 20 Bytes - address
+         * @param message 32 Bytes - hashed message to sign
+         */
         data class SignMessage(val id: Long, val address: String, val message: String) : MethodCall(id)
 
         data class Custom(val id: Long, val method: String, val params: List<*>?) : MethodCall(id)
