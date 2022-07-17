@@ -46,7 +46,7 @@ fun Session.SessionParams.intoMap(params: MutableMap<String, Any?> = mutableMapO
 
 fun Map<String, *>.extractSessionParams(): Session.SessionParams {
     val approved = this["approved"] as? Boolean ?: throw IllegalArgumentException("approved missing")
-    val chainId = this["chainId"] as? Long
+    val chainId = (this["chainId"] as Double).toLong()
     val accounts = nullOnThrow { (this["accounts"] as? List<*>)?.toStringList() }
 
     return Session.SessionParams(approved, chainId, accounts, nullOnThrow { this.extractPeerData() })
