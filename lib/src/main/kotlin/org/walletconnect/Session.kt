@@ -1,5 +1,6 @@
 package org.walletconnect
 
+import com.squareup.moshi.JsonClass
 import java.net.URLDecoder
 import java.net.URLEncoder
 
@@ -26,6 +27,7 @@ interface Session {
     fun removeCallback(cb: Callback)
     fun clearCallbacks()
 
+    @JsonClass(generateAdapter = true)
     data class FullyQualifiedConfig(
             val handshakeTopic: String,
             val bridge: String,
@@ -154,7 +156,10 @@ interface Session {
         data class Response(val id: Long, val result: Any?, val error: Error? = null) : MethodCall(id)
     }
 
+    @JsonClass(generateAdapter = true)
     data class PeerData(val id: String, val meta: PeerMeta?)
+
+    @JsonClass(generateAdapter = true)
     data class PeerMeta(
             val url: String? = null,
             val name: String? = null,

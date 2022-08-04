@@ -1,3 +1,6 @@
+plugins {
+    id("com.google.devtools.ksp").version("1.7.0-1.0.6")
+}
 apply plugin: "kotlin"
 apply plugin: 'maven'
 
@@ -13,10 +16,8 @@ dependencies {
 
     implementation "org.bouncycastle:bcprov-jdk15to18:1.68"
 
-    implementation 'com.squareup.moshi:moshi:1.8.0'
-    // TODO: it would be better to use the generated adapter by moshi
-    // but for that we should move the implementations in different modules
-    //kapt "com.squareup.moshi:moshi-kotlin-codegen:$versions.moshi"
+    implementation "com.squareup.moshi:moshi:$versions.moshi"
+    ksp "com.squareup.moshi:moshi-kotlin-codegen:$versions.moshi"
 
     implementation "com.squareup.okhttp3:okhttp:$versions.okhttp"
 

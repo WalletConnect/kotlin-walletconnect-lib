@@ -1,5 +1,6 @@
 package org.walletconnect.impls
 
+import com.squareup.moshi.JsonClass
 import org.walletconnect.Session
 import org.walletconnect.nullOnThrow
 import org.walletconnect.types.extractSessionParams
@@ -166,6 +167,12 @@ class WCSession(
                     )
                 )
             }
+            Session.Transport.Status.Disconnected -> {
+                // no-op
+            }
+            is Session.Transport.Status.Error -> {
+                // no-op
+            }
         }
         propagateToCallbacks {
             onStatus(when(status) {
@@ -210,6 +217,9 @@ class WCSession(
             is Session.MethodCall.Response -> {
                 val callback = requests[data.id] ?: return
                 callback(data)
+            }
+            is Session.MethodCall.Custom -> {
+                // no-op
             }
         }
 
@@ -297,6 +307,7 @@ interface WCSessionStore {
 
     fun list(): List<State>
 
+    @JsonClass(generateAdapter = true)
     data class State(
             val config: Session.FullyQualifiedConfig,
             val clientData: Session.PeerData,
