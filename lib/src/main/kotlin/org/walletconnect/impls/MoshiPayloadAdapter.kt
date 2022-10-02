@@ -93,7 +93,7 @@ class MoshiPayloadAdapter(moshi: Moshi) : Session.PayloadAdapter {
     /**
      * Convert FROM request bytes
      */
-    private fun ByteArray.toMethodCall(): Session.MethodCall =
+    fun ByteArray.toMethodCall(): Session.MethodCall =
         String(this).let { json ->
             mapAdapter.fromJson(json)?.let {
                 try {
