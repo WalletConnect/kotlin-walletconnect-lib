@@ -99,7 +99,7 @@ class WCSession(
     override fun offer() {
         if (transport.connect()) {
             val requestId = createCallId()
-            send(Session.MethodCall.SessionRequest(requestId, clientData), topic = config.handshakeTopic, callback = { resp ->
+            send(Session.MethodCall.SessionRequest(requestId, clientData, chainId), topic = config.handshakeTopic, callback = { resp ->
                 (resp.result as? Map<String, *>)?.extractSessionParams()?.let { params ->
                     peerId = params.peerData?.id
                     peerMeta = params.peerData?.meta
@@ -193,6 +193,7 @@ class WCSession(
                 handshakeId = data.id
                 peerId = data.peer.id
                 peerMeta = data.peer.meta
+                chainId = data.chainId
                 storeSession()
             }
             is Session.MethodCall.SessionUpdate -> {

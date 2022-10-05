@@ -132,7 +132,7 @@ interface Session {
     sealed class MethodCall(private val internalId: Long) {
         fun id() = internalId
 
-        data class SessionRequest(val id: Long, val peer: PeerData) : MethodCall(id)
+        data class SessionRequest(val id: Long, val peer: PeerData, val chainId: Long?) : MethodCall(id)
 
         data class SessionUpdate(val id: Long, val params: SessionParams) : MethodCall(id)
 
