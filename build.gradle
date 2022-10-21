@@ -5,6 +5,10 @@ buildscript {
                 moshi                     : '1.8.0',
                 okhttp                    : '3.11.0',
                 jupiter                   : '5.7.0',
+                gson                      : '2.8.7',
+                khex                      : '1.1.0',
+                bcprov                    : '1.68',
+                assertjCore               : '3.19.0',
 
                 'minSdk'                  : 14,
                 'compileSdk'              : 28,
