@@ -106,7 +106,15 @@ class WCSession(
                     approvedAccounts = params.accounts
                     chainId = params.chainId
                     storeSession()
-                    propagateToCallbacks { onStatus(if (params.approved) Session.Status.Approved else Session.Status.Closed) }
+                    propagateToCallbacks {
+                        onStatus(
+                            if (params.approved){
+                                Session.Status.Approved(clientData.id, peerId)
+                            } else{
+                                Session.Status.Closed
+                            }
+                        )
+                    }
                 }
             })
             handshakeId = requestId
@@ -121,7 +129,7 @@ class WCSession(
         val params = Session.SessionParams(true, chainId, accounts, clientData).intoMap()
         send(Session.MethodCall.Response(handshakeId, params))
         storeSession()
-        propagateToCallbacks { onStatus(Session.Status.Approved) }
+        propagateToCallbacks { onStatus(Session.Status.Approved(clientData.id, peerId)) }
     }
 
     override fun update(accounts: List<String>, chainId: Long) {
@@ -169,7 +177,7 @@ class WCSession(
         }
         propagateToCallbacks {
             onStatus(when(status) {
-                Session.Transport.Status.Connected -> Session.Status.Connected
+                Session.Transport.Status.Connected -> Session.Status.Connected(clientData.id, peerId)
                 Session.Transport.Status.Disconnected -> Session.Status.Disconnected
                 is Session.Transport.Status.Error -> Session.Status.Error(Session.TransportError(status.throwable))
             })
