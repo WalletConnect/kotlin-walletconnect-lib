@@ -76,9 +76,9 @@ interface Session {
     }
 
     sealed class Status {
-        object Connected : Status()
+        data class Connected(val clientId: String, val peerId: String?) : Status()
         object Disconnected : Status()
-        object Approved : Status()
+        data class Approved(val clientId: String, val peerId: String?) : Status()
         object Closed : Status()
         data class Error(val throwable: Throwable) : Status()
     }
@@ -132,7 +132,7 @@ interface Session {
     sealed class MethodCall(private val internalId: Long) {
         fun id() = internalId
 
-        data class SessionRequest(val id: Long, val peer: PeerData) : MethodCall(id)
+        data class SessionRequest(val id: Long, val peer: PeerData, val chainId: Long?) : MethodCall(id)
 
         data class SessionUpdate(val id: Long, val params: SessionParams) : MethodCall(id)
 
