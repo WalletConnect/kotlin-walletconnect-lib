@@ -37,8 +37,7 @@ class OkHttpTransport(
             socket ?: run {
                 connected = false
                 val bridgeWS = serverUrl.replace("https://", "wss://").replace("http://", "ws://")
-                socket = client.newWebSocket(Request.Builder().url(bridgeWS).build(), this)
-                return true
+                return tryExec { socket = client.newWebSocket(Request.Builder().url(bridgeWS).build(), this) }
             }
         }
         return false
@@ -68,7 +67,8 @@ class OkHttpTransport(
         mapOf(
             "topic" to topic,
             "type" to type,
-            "payload" to payload
+            "payload" to payload,
+            "silent" to true
         )
 
     override fun close() {
@@ -113,11 +113,13 @@ class OkHttpTransport(
         statusHandler(Disconnected)
     }
 
-    private fun tryExec(block: () -> Unit) {
-        try {
+    private fun tryExec(block: () -> Unit): Boolean {
+        return try {
             block()
+            true
         } catch (e: Exception) {
             statusHandler(Error(e))
+            false
         }
     }
 
