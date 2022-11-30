@@ -77,7 +77,7 @@ interface Session {
 
     sealed class Status {
         data class Connected(val clientId: String, val peerId: String?) : Status()
-        object Disconnected : Status()
+        data class Disconnected(val forceToClearSession: Boolean) : Status()
         data class Approved(val clientId: String, val peerId: String?) : Status()
         object Closed : Status()
         data class Error(val throwable: Throwable) : Status()
@@ -103,7 +103,7 @@ interface Session {
 
         sealed class Status {
             object Connected : Status()
-            object Disconnected : Status()
+            data class Disconnected(val forceToClearSession: Boolean) : Status()
             data class Error(val throwable: Throwable) : Status()
         }
 

@@ -178,7 +178,7 @@ class WCSession(
         propagateToCallbacks {
             onStatus(when(status) {
                 Session.Transport.Status.Connected -> Session.Status.Connected(clientData.id, peerId)
-                Session.Transport.Status.Disconnected -> Session.Status.Disconnected
+                is Session.Transport.Status.Disconnected -> Session.Status.Disconnected(status.forceToClearSession)
                 is Session.Transport.Status.Error -> Session.Status.Error(Session.TransportError(status.throwable))
             })
         }
