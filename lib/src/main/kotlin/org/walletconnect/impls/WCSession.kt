@@ -71,6 +71,10 @@ class WCSession(
         sessionCallbacks.clear()
     }
 
+    override fun disconnect() {
+        internalClose()
+    }
+
     private fun propagateToCallbacks(action: Session.Callback.() -> Unit) {
         sessionCallbacks.forEach {
             try { it.action() }

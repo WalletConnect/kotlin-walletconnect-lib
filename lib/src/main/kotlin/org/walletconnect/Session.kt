@@ -26,6 +26,8 @@ interface Session {
     fun removeCallback(cb: Callback)
     fun clearCallbacks()
 
+    fun disconnect()
+
     data class FullyQualifiedConfig(
             val handshakeTopic: String,
             val bridge: String,
