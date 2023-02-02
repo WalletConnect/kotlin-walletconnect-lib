@@ -71,6 +71,10 @@ class WCSession(
         sessionCallbacks.clear()
     }
 
+    override fun disconnect() {
+        internalClose()
+    }
+
     private fun propagateToCallbacks(action: Session.Callback.() -> Unit) {
         sessionCallbacks.forEach {
             try { it.action() }
@@ -109,7 +113,7 @@ class WCSession(
                     propagateToCallbacks {
                         onStatus(
                             if (params.approved){
-                                Session.Status.Approved(clientData.id, peerId)
+                                Session.Status.Approved(clientData.id)
                             } else{
                                 Session.Status.Closed
                             }
@@ -129,7 +133,7 @@ class WCSession(
         val params = Session.SessionParams(true, chainId, accounts, clientData).intoMap()
         send(Session.MethodCall.Response(handshakeId, params))
         storeSession()
-        propagateToCallbacks { onStatus(Session.Status.Approved(clientData.id, peerId)) }
+        propagateToCallbacks { onStatus(Session.Status.Approved(clientData.id)) }
     }
 
     override fun update(accounts: List<String>, chainId: Long) {
@@ -177,7 +181,7 @@ class WCSession(
         }
         propagateToCallbacks {
             onStatus(when(status) {
-                Session.Transport.Status.Connected -> Session.Status.Connected(clientData.id, peerId)
+                Session.Transport.Status.Connected -> Session.Status.Connected(clientData.id)
                 is Session.Transport.Status.Disconnected -> Session.Status.Disconnected(status.isSessionDeletionNeeded)
                 is Session.Transport.Status.Error -> Session.Status.Error(Session.TransportError(status.throwable))
             })
